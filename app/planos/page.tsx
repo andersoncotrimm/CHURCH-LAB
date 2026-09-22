@@ -16,15 +16,21 @@ function formatPrice(price: number) {
 }
 
 export default async function PlanosPage() {
-  const supabase = await createClient();
+  let typedPlans: Plan[] = [];
 
-  const { data: plans } = await supabase
-    .from("plans")
-    .select("*")
-    .eq("is_active", true)
-    .order("display_order", { ascending: true });
+  try {
+    const supabase = await createClient();
 
-  const typedPlans = (plans ?? []) as Plan[];
+    const { data: plans } = await supabase
+      .from("plans")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order", { ascending: true });
+
+    typedPlans = (plans ?? []) as Plan[];
+  } catch (error) {
+    console.error("Falha ao carregar planos:", error);
+  }
 
   return (
     <div className="flex min-h-screen flex-col">

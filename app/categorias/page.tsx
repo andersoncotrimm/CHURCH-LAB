@@ -4,23 +4,31 @@ import { SiteHeader } from "@/components/landing/site-header";
 import { SiteFooter } from "@/components/landing/site-footer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
+import type { Category } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
 export default async function CategoriasPage() {
-  const supabase = await createClient();
-
-  const [{ data: categories }, { data: psdCategoryRows }] = await Promise.all([
-    supabase.from("categories").select("*").order("name", { ascending: true }),
-    supabase
-      .from("psd_categories")
-      .select("category_id, psd_files!inner(is_published)")
-      .eq("psd_files.is_published", true),
-  ]);
-
+  let categories: Category[] = [];
   const countByCategory = new Map<string, number>();
-  for (const row of psdCategoryRows ?? []) {
-    countByCategory.set(row.category_id, (countByCategory.get(row.category_id) ?? 0) + 1);
+
+  try {
+    const supabase = await createClient();
+
+    const [{ data: categoriesData }, { data: psdCategoryRows }] = await Promise.all([
+      supabase.from("categories").select("*").order("name", { ascending: true }),
+      supabase
+        .from("psd_categories")
+        .select("category_id, psd_files!inner(is_published)")
+        .eq("psd_files.is_published", true),
+    ]);
+
+    categories = categoriesData ?? [];
+    for (const row of psdCategoryRows ?? []) {
+      countByCategory.set(row.category_id, (countByCategory.get(row.category_id) ?? 0) + 1);
+    }
+  } catch (error) {
+    console.error("Falha ao carregar categorias:", error);
   }
 
   return (
@@ -40,7 +48,7 @@ export default async function CategoriasPage() {
             </p>
           </div>
 
-          {!categories || categories.length === 0 ? (
+          {categories.length === 0 ? (
             <div className="mx-auto mt-14 max-w-md">
               <EmptyState
                 icon={<FolderTree className="h-6 w-6" />}

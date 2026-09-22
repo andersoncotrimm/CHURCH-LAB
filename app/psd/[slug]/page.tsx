@@ -19,27 +19,36 @@ function formatFileSize(bytes: number | null) {
 }
 
 export default async function PsdDetailPage({ params }: { params: { slug: string } }) {
-  const supabase = await createClient();
-
-  const psd = await getPublishedPsdBySlug(supabase, params.slug);
-  if (!psd) notFound();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
   let ctaState: DownloadCtaState = "guest";
   let availableCredits: number | null = null;
+  const psd = await (async () => {
+    try {
+      const supabase = await createClient();
+      const found = await getPublishedPsdBySlug(supabase, params.slug);
+      if (!found) return null;
 
-  if (user) {
-    const credits = await getUserCreditsSummary(supabase, user.id);
-    if (!credits) {
-      ctaState = "no-subscription";
-    } else {
-      availableCredits = credits.available;
-      ctaState = credits.available >= psd.credit_cost ? "ready" : "insufficient";
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        const credits = await getUserCreditsSummary(supabase, user.id);
+        if (!credits) {
+          ctaState = "no-subscription";
+        } else {
+          availableCredits = credits.available;
+          ctaState = credits.available >= found.credit_cost ? "ready" : "insufficient";
+        }
+      }
+
+      return found;
+    } catch (error) {
+      console.error("Falha ao carregar detalhes do PSD:", error);
+      return null;
     }
-  }
+  })();
+
+  if (!psd) notFound();
 
   const fileSize = formatFileSize(psd.file_size);
 

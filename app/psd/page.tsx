@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
 import { getPublishedPsds, getCategories } from "@/lib/psd";
 import { cn } from "@/lib/utils";
+import type { Category, PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -16,24 +17,29 @@ interface PsdLibraryPageProps {
 }
 
 export default async function PsdLibraryPage({ searchParams }: PsdLibraryPageProps) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const [allPsds, categories] = await Promise.all([
-    getPublishedPsds(supabase),
-    getCategories(supabase),
-  ]);
-
+  // Biblioteca pública: qualquer falha de rede/config do Supabase degrada
+  // para "nenhum PSD encontrado" em vez de derrubar a página inteira.
+  let userId: string | null = null;
+  let allPsds: PsdFile[] = [];
+  let categories: Category[] = [];
   let favoritedIds = new Set<string>();
-  if (user) {
-    const { data: favorites } = await supabase
-      .from("favorites")
-      .select("psd_id")
-      .eq("user_id", user.id);
-    favoritedIds = new Set((favorites ?? []).map((f) => f.psd_id));
+
+  try {
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
+
+    [allPsds, categories] = await Promise.all([getPublishedPsds(supabase), getCategories(supabase)]);
+
+    if (userId) {
+      const { data: favorites } = await supabase.from("favorites").select("psd_id").eq("user_id", userId);
+      favoritedIds = new Set((favorites ?? []).map((f) => f.psd_id));
+    }
+  } catch (error) {
+    console.error("Falha ao carregar a biblioteca de PSDs:", error);
   }
 
   const categoria = searchParams.categoria;
@@ -134,7 +140,7 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
                     key={psd.id}
                     psd={psd}
                     isFavorited={favoritedIds.has(psd.id)}
-                    isLoggedIn={!!user}
+                    isLoggedIn={!!userId}
                   />
                 ))}
               </div>
