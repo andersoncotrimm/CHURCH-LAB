@@ -8,13 +8,18 @@
 -- todas as instruções usam "if not exists" / "create or replace" / checagens
 -- explícitas, e podem ser reexecutadas com segurança (idempotente).
 --
--- Roda dentro de UMA transação explícita (begin ... commit): ou tudo é
--- criado, ou nada é. Se der erro no meio, o Postgres mostra exatamente em
--- qual statement parou e a transação inteira é revertida automaticamente —
--- não fica schema pela metade. Os "raise notice" ao longo do arquivo servem
--- de checkpoint: o último que aparecer no log é o ponto exato onde parou.
-
-begin;
+-- Migration ÚNICA e completa: tabelas, índices, triggers, RLS, policies,
+-- funções do sistema de créditos e buckets de Storage — nessa ordem, para
+-- que toda dependência (ex.: plans -> products) já exista antes de ser
+-- referenciada. Sem BEGIN/COMMIT explícitos: o SQL Editor do Supabase já
+-- controla a transação de cada execução, e um COMMIT embutido no meio do
+-- script pode fechar essa transação antes da hora e fazer o restante se
+-- perder silenciosamente. Cada statement de criação usa IF NOT EXISTS /
+-- CREATE OR REPLACE, então rodar tudo de novo (inclusive após uma falha
+-- parcial) é seguro.
+--
+-- Os "raise notice" ao longo do arquivo servem de checkpoint: o último que
+-- aparecer no log é o ponto exato onde a execução parou, caso algo falhe.
 
 create extension if not exists "pgcrypto";
 
@@ -33,7 +38,7 @@ create table if not exists public.profiles (
 
 comment on table public.profiles is 'Dados de perfil do núcleo de usuários do CHURCH-LAB (1:1 com auth.users).';
 
-do $chk1$ begin raise notice 'checkpoint 1/6: profiles criada.'; end $chk1$;
+do $chk1$ begin raise notice 'checkpoint 1/8: profiles criada.'; end $chk1$;
 
 -- =========================================================================
 -- 2. PRODUCTS — módulos comercializados pelo CHURCH-LAB
@@ -53,7 +58,7 @@ create table if not exists public.products (
 comment on table public.products is 'Produtos/módulos do CHURCH-LAB (assets é o primeiro; events/forms/automation ficam reservados para o futuro).';
 
 -- =========================================================================
--- 3. PLANS
+-- 3. PLANS — cada plano define quantos créditos concede por ciclo mensal
 -- =========================================================================
 
 create table if not exists public.plans (
@@ -72,10 +77,10 @@ create table if not exists public.plans (
   unique (product_id, slug)
 );
 
-comment on column public.plans.monthly_credits is 'Créditos concedidos a cada ciclo da assinatura. Não cumulativo entre ciclos.';
+comment on column public.plans.monthly_credits is 'Créditos concedidos a cada ciclo da assinatura. Não cumulativo entre ciclos (regra 3).';
 
 -- =========================================================================
--- 4. SUBSCRIPTIONS
+-- 4. SUBSCRIPTIONS — assinatura de um usuário a um plano
 -- =========================================================================
 
 create table if not exists public.subscriptions (
@@ -92,10 +97,10 @@ create table if not exists public.subscriptions (
   check (current_period_end > current_period_start)
 );
 
-comment on table public.subscriptions is 'Assinatura de um usuário a um plano. O ciclo de cobrança é individual (data de início da assinatura), não fixo no dia 1 do mês.';
+comment on table public.subscriptions is 'Assinatura de um usuário a um plano. O ciclo de cobrança é individual (data de início da assinatura), não fixo no dia 1 do mês (regra 11).';
 
 -- =========================================================================
--- 5. SUBSCRIPTION_CYCLES — ciclo individual de créditos de uma assinatura
+-- 5. SUBSCRIPTION_CYCLES — ciclo mensal individual de créditos
 -- =========================================================================
 
 create table if not exists public.subscription_cycles (
@@ -113,14 +118,14 @@ create table if not exists public.subscription_cycles (
   check (credits_used <= credits_granted)
 );
 
-comment on table public.subscription_cycles is 'Ciclo de créditos de uma assinatura. credits_granted é fixado no momento da criação do ciclo (baseado no plano vigente) e nunca é alterado retroativamente. Saldo não usado expira ao fechar o ciclo, nunca é transferido.';
+comment on table public.subscription_cycles is 'Ciclo de créditos de uma assinatura. credits_granted é fixado no momento da criação do ciclo (baseado no plano vigente) e nunca é alterado retroativamente. Saldo não usado expira ao fechar o ciclo, nunca é transferido (regras 2, 3, 12).';
 
 -- Garante que uma assinatura nunca tenha dois ciclos ativos simultaneamente.
 create unique index if not exists idx_subscription_cycles_one_active_per_subscription
   on public.subscription_cycles (subscription_id)
   where (status = 'active');
 
-do $chk2$ begin raise notice 'checkpoint 2/6: products, plans, subscriptions e subscription_cycles criadas.'; end $chk2$;
+do $chk2$ begin raise notice 'checkpoint 2/8: products, plans, subscriptions e subscription_cycles criadas.'; end $chk2$;
 
 -- =========================================================================
 -- 6. CATEGORIES
@@ -147,7 +152,7 @@ create table if not exists public.tags (
 );
 
 -- =========================================================================
--- 8. PSD_FILES
+-- 8. PSD_FILES — custo em créditos configurável individualmente (regras 4-6)
 -- =========================================================================
 
 create table if not exists public.psd_files (
@@ -168,8 +173,8 @@ create table if not exists public.psd_files (
   updated_at timestamptz not null default now()
 );
 
-comment on column public.psd_files.credit_cost is 'Custo em créditos definido individualmente pelo administrador no cadastro do arquivo. Não segue regra fixa por categoria.';
-comment on column public.psd_files.file_path is 'Referência ao objeto no bucket protegido (Supabase Storage). Entrega via signed URL será implementada em etapa futura.';
+comment on column public.psd_files.credit_cost is 'Custo em créditos definido individualmente pelo administrador no cadastro/edição do arquivo (regras 4-6). Não segue regra fixa por categoria: um carrossel, uma exposição, um pack etc. podem ter custos diferentes.';
+comment on column public.psd_files.file_path is 'Referência ao objeto no bucket protegido psd-originals (regra 14). Entrega via signed URL será implementada em etapa futura.';
 
 -- =========================================================================
 -- 9. PSD_CATEGORIES (N:N)
@@ -239,9 +244,9 @@ create table if not exists public.credit_transactions (
   )
 );
 
-comment on table public.credit_transactions is 'Auditoria de movimentação de créditos. Linhas nunca são apagadas pela aplicação.';
+comment on table public.credit_transactions is 'Auditoria de movimentação de créditos: concessões, consumos, bônus, ajustes e expirações (regra 10). Linhas nunca são apagadas pela aplicação.';
 
-do $chk3$ begin raise notice 'checkpoint 3/6: categories, tags, psd_files, psd_categories, psd_tags, favorites, downloads e credit_transactions criadas.'; end $chk3$;
+do $chk3$ begin raise notice 'checkpoint 3/8: categories, tags, psd_files, psd_categories, psd_tags, favorites, downloads e credit_transactions criadas.'; end $chk3$;
 
 -- =========================================================================
 -- ÍNDICES
@@ -270,7 +275,7 @@ create index if not exists idx_downloads_subscription_cycle_id on public.downloa
 create index if not exists idx_credit_transactions_user_id on public.credit_transactions (user_id);
 create index if not exists idx_credit_transactions_subscription_cycle_id on public.credit_transactions (subscription_cycle_id);
 
-do $chk4$ begin raise notice 'checkpoint 4/6: índices criados.'; end $chk4$;
+do $chk4$ begin raise notice 'checkpoint 4/8: índices criados.'; end $chk4$;
 
 -- =========================================================================
 -- TRIGGERS — updated_at automático
@@ -339,6 +344,8 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+do $chk5$ begin raise notice 'checkpoint 5/8: triggers de updated_at e on_auth_user_created criados.'; end $chk5$;
 
 -- =========================================================================
 -- ROW LEVEL SECURITY
@@ -444,7 +451,7 @@ create policy "Users can view own credit transactions" on public.credit_transact
 -- pelo cliente autenticado comum — por isso nenhuma policy de
 -- insert/update/delete foi criada para "authenticated" nessas tabelas.
 
-do $chk5$ begin raise notice 'checkpoint 5/6: RLS habilitada e policies aplicadas.'; end $chk5$;
+do $chk6$ begin raise notice 'checkpoint 6/8: RLS habilitada e policies aplicadas.'; end $chk6$;
 
 -- =========================================================================
 -- FUNÇÕES — regra central de consumo de créditos e ciclo de vida do ciclo
@@ -495,7 +502,7 @@ revoke execute on function public.start_subscription_cycle(uuid, timestamptz, ti
 grant execute on function public.start_subscription_cycle(uuid, timestamptz, timestamptz) to service_role;
 
 -- Fecha um ciclo ativo: o saldo não utilizado expira (transação "expiration"
--- com amount negativo) e NUNCA é transferido para o próximo ciclo.
+-- com amount negativo) e NUNCA é transferido para o próximo ciclo (regra 12).
 create or replace function public.expire_subscription_cycle(p_cycle_id uuid)
 returns public.subscription_cycles
 language plpgsql
@@ -535,10 +542,10 @@ $expire_subscription_cycle$;
 revoke execute on function public.expire_subscription_cycle(uuid) from public;
 grant execute on function public.expire_subscription_cycle(uuid) to service_role;
 
--- Regra central de consumo: valida autenticação, assinatura ativa, ciclo
--- ativo e saldo suficiente; se ok, desconta créditos, registra o download
--- e a transação de auditoria — tudo atomicamente (com lock de linha no
--- ciclo para evitar condição de corrida em downloads simultâneos).
+-- Regra central de consumo (regras 7-9): valida autenticação, assinatura
+-- ativa, ciclo ativo e saldo suficiente; se ok, desconta créditos, registra
+-- o download e a transação de auditoria — tudo atomicamente (com lock de
+-- linha no ciclo, o que também impede saldo negativo mesmo sob concorrência).
 create or replace function public.redeem_psd_credits(p_psd_id uuid)
 returns public.downloads
 language plpgsql
@@ -608,15 +615,41 @@ $redeem_psd_credits$;
 revoke execute on function public.redeem_psd_credits(uuid) from public;
 grant execute on function public.redeem_psd_credits(uuid) to authenticated;
 
--- NOTA sobre "compra de créditos adicionais": a fórmula central de saldo
--- continua sendo available = credits_granted - credits_used (conforme a
--- regra do ciclo). Um crédito bônus/extra comprado fora do ciclo mensal
--- deve, quando essa etapa for implementada, (1) somar ao credits_granted
--- do ciclo ativo e (2) registrar uma linha em credit_transactions com
--- transaction_type = 'bonus' (amount > 0) — a estrutura já suporta isso,
--- sem precisar de tabela nova. Fluxo de compra/checkout fica para depois.
+-- NOTA sobre "compra de créditos adicionais" (regra 13): a fórmula central
+-- de saldo continua sendo available = credits_granted - credits_used
+-- (conforme a regra do ciclo). Um crédito bônus/extra comprado fora do
+-- ciclo mensal deve, quando essa etapa for implementada, (1) somar ao
+-- credits_granted do ciclo ativo e (2) registrar uma linha em
+-- credit_transactions com transaction_type = 'bonus' (amount > 0) — a
+-- estrutura já suporta isso, sem precisar de tabela nova. Fluxo de
+-- compra/checkout em si fica para uma etapa futura.
 
-do $chk6$ begin raise notice 'checkpoint 6/6: funções start_subscription_cycle, expire_subscription_cycle e redeem_psd_credits criadas.'; end $chk6$;
-do $chk7$ begin raise notice 'CHURCH-LAB ASSETS: schema principal criado com sucesso (tabelas, índices, triggers, RLS, policies e funções).'; end $chk7$;
+do $chk7$ begin raise notice 'checkpoint 7/8: funções start_subscription_cycle, expire_subscription_cycle e redeem_psd_credits criadas.'; end $chk7$;
 
-commit;
+-- =========================================================================
+-- STORAGE — buckets separados (thumbnail / preview / arquivo original)
+-- =========================================================================
+-- O arquivo PSD original nunca fica em bucket público (regra 14). A entrega
+-- via signed URL (validando assinatura + créditos) fica para uma etapa
+-- futura; por ora psd_files.file_path só referencia o objeto protegido.
+
+insert into storage.buckets (id, name, public)
+values
+  ('psd-thumbnails', 'psd-thumbnails', true),
+  ('psd-previews', 'psd-previews', true),
+  ('psd-originals', 'psd-originals', false)
+on conflict (id) do nothing;
+
+drop policy if exists "Public read access to psd thumbnails" on storage.objects;
+create policy "Public read access to psd thumbnails" on storage.objects
+  for select to authenticated, anon using (bucket_id = 'psd-thumbnails');
+
+drop policy if exists "Public read access to psd previews" on storage.objects;
+create policy "Public read access to psd previews" on storage.objects
+  for select to authenticated, anon using (bucket_id = 'psd-previews');
+
+-- Nenhuma policy de leitura para "psd-originals": acesso somente via
+-- service_role até a implementação do fluxo de signed URL protegido.
+
+do $chk8$ begin raise notice 'checkpoint 8/8: buckets psd-thumbnails, psd-previews, psd-originals e policies de storage.objects aplicados.'; end $chk8$;
+do $chkdone$ begin raise notice 'CHURCH-LAB ASSETS: migration completa aplicada com sucesso (tabelas, índices, triggers, RLS, policies, funções e storage).'; end $chkdone$;
