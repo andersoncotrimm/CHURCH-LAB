@@ -8,20 +8,39 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
-import { getPublishedPsds, getPopularCategories } from "@/lib/psd";
+import { getPublishedPsds, getPopularCategories, type PopularCategory } from "@/lib/psd";
+import type { PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
 export default async function LandingPage() {
-  const supabase = await createClient();
+  // A home pública nunca pode derrubar o site inteiro por causa de um erro
+  // de rede/config do Supabase — qualquer falha aqui degrada para a visão
+  // anônima com biblioteca vazia, em vez de estourar um erro 500.
+  let userId: string | null = null;
+  let allPsds: PsdFile[] = [];
+  let popularCategories: PopularCategory[] = [];
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  try {
+    const supabase = await createClient();
 
-  if (user) redirect("/dashboard");
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    userId = user?.id ?? null;
 
-  const allPsds = await getPublishedPsds(supabase);
+    if (!userId) {
+      [allPsds, popularCategories] = await Promise.all([
+        getPublishedPsds(supabase),
+        getPopularCategories(supabase),
+      ]);
+    }
+  } catch (error) {
+    console.error("Falha ao carregar a home pública:", error);
+  }
+
+  if (userId) redirect("/dashboard");
+
   const excludeIds = new Set<string>();
 
   const featuredItem = [...allPsds].sort((a, b) => b.downloadsCount - a.downloadsCount)[0] ?? null;
@@ -31,8 +50,6 @@ export default async function LandingPage() {
   if (highlightItem) excludeIds.add(highlightItem.id);
 
   const newItem = allPsds.find((p) => !excludeIds.has(p.id)) ?? null;
-
-  const popularCategories = await getPopularCategories(supabase);
 
   return (
     <PublicShell>
