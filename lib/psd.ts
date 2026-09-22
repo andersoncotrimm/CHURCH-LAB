@@ -1,0 +1,89 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Category, PsdFile } from "@/lib/types/psd";
+
+interface PsdFileRow {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  preview_url: string | null;
+  file_path: string;
+  file_size: number | null;
+  file_format: string | null;
+  dimensions: string | null;
+  credit_cost: number;
+  is_published: boolean;
+  is_featured: boolean;
+  created_at: string;
+  updated_at: string;
+  psd_categories: { categories: Category | null }[] | null;
+}
+
+async function attachDownloadCounts(
+  supabase: SupabaseClient,
+  psds: Omit<PsdFile, "downloadsCount">[]
+): Promise<PsdFile[]> {
+  if (psds.length === 0) return [];
+
+  const { data: downloadRows } = await supabase
+    .from("downloads")
+    .select("psd_id")
+    .in(
+      "psd_id",
+      psds.map((p) => p.id)
+    );
+
+  const counts = new Map<string, number>();
+  for (const row of downloadRows ?? []) {
+    counts.set(row.psd_id, (counts.get(row.psd_id) ?? 0) + 1);
+  }
+
+  return psds.map((psd) => ({ ...psd, downloadsCount: counts.get(psd.id) ?? 0 }));
+}
+
+function mapRow(row: PsdFileRow): Omit<PsdFile, "downloadsCount"> {
+  const { psd_categories, ...rest } = row;
+  return {
+    ...rest,
+    categories: (psd_categories ?? [])
+      .map((pc) => pc.categories)
+      .filter((c): c is Category => c !== null),
+  };
+}
+
+/** Biblioteca pública: só PSDs publicados, mais recentes primeiro. */
+export async function getPublishedPsds(supabase: SupabaseClient): Promise<PsdFile[]> {
+  const { data, error } = await supabase
+    .from("psd_files")
+    .select("*, psd_categories(categories(*))")
+    .eq("is_published", true)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return attachDownloadCounts(supabase, (data as unknown as PsdFileRow[]).map(mapRow));
+}
+
+/** Detalhe público de um PSD publicado pelo slug. */
+export async function getPublishedPsdBySlug(
+  supabase: SupabaseClient,
+  slug: string
+): Promise<PsdFile | null> {
+  const { data, error } = await supabase
+    .from("psd_files")
+    .select("*, psd_categories(categories(*))")
+    .eq("slug", slug)
+    .eq("is_published", true)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const [withCount] = await attachDownloadCounts(supabase, [mapRow(data as unknown as PsdFileRow)]);
+  return withCount;
+}
+
+export async function getCategories(supabase: SupabaseClient): Promise<Category[]> {
+  const { data } = await supabase.from("categories").select("*").order("name", { ascending: true });
+  return data ?? [];
+}
