@@ -653,3 +653,26 @@ create policy "Public read access to psd previews" on storage.objects
 
 do $chk8$ begin raise notice 'checkpoint 8/8: buckets psd-thumbnails, psd-previews, psd-originals e policies de storage.objects aplicados.'; end $chk8$;
 do $chkdone$ begin raise notice 'CHURCH-LAB ASSETS: migration completa aplicada com sucesso (tabelas, índices, triggers, RLS, policies, funções e storage).'; end $chkdone$;
+
+-- =========================================================================
+-- VERIFICAÇÃO FINAL — statement de propósito: o SQL Editor do Supabase só
+-- mostra uma grade de resultado para o ÚLTIMO statement que retorna linhas
+-- (os "do $$ ... $$" acima não retornam nada, por isso o editor mostra só
+-- "Success. No rows returned"). Este SELECT final resolve essa ambiguidade
+-- na hora: se aparecer "tabelas_criadas = 13" no painel de resultados, a
+-- migration inteira rodou. Qualquer número menor aponta exatamente quantas
+-- das 13 tabelas existem agora — compare com a lista em "faltando".
+select
+  count(real.table_name) as tabelas_criadas,
+  13 as tabelas_esperadas,
+  array_agg(esperada.table_name order by esperada.table_name) filter (
+    where real.table_name is null
+  ) as faltando
+from (
+  values
+    ('profiles'), ('products'), ('plans'), ('subscriptions'), ('subscription_cycles'),
+    ('categories'), ('tags'), ('psd_files'), ('psd_categories'), ('psd_tags'),
+    ('favorites'), ('downloads'), ('credit_transactions')
+) as esperada(table_name)
+left join information_schema.tables real
+  on real.table_schema = 'public' and real.table_name = esperada.table_name;
