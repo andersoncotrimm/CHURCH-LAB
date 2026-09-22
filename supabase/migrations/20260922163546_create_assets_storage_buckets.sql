@@ -23,7 +23,7 @@ values
   ('psd-originals', 'psd-originals', false)
 on conflict (id) do nothing;
 
-do $$ begin raise notice 'checkpoint 1/2: buckets psd-thumbnails, psd-previews e psd-originals criados.'; end $$;
+do $chk1$ begin raise notice 'checkpoint 1/2: buckets psd-thumbnails, psd-previews e psd-originals criados.'; end $chk1$;
 
 drop policy if exists "Public read access to psd thumbnails" on storage.objects;
 create policy "Public read access to psd thumbnails" on storage.objects
@@ -36,7 +36,7 @@ create policy "Public read access to psd previews" on storage.objects
 -- Nenhuma policy de leitura para "psd-originals": acesso somente via
 -- service_role até a implementação do fluxo de signed URL protegido.
 
-do $$ begin raise notice 'checkpoint 2/2: policies de leitura pública para thumbnails/previews aplicadas.'; end $$;
-do $$ begin raise notice 'CHURCH-LAB ASSETS: buckets de storage configurados com sucesso.'; end $$;
+do $chk2$ begin raise notice 'checkpoint 2/2: policies de leitura pública para thumbnails/previews aplicadas.'; end $chk2$;
+do $chk3$ begin raise notice 'CHURCH-LAB ASSETS: buckets de storage configurados com sucesso.'; end $chk3$;
 
 commit;

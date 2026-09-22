@@ -33,7 +33,7 @@ create table if not exists public.profiles (
 
 comment on table public.profiles is 'Dados de perfil do núcleo de usuários do CHURCH-LAB (1:1 com auth.users).';
 
-do $$ begin raise notice 'checkpoint 1/6: profiles criada.'; end $$;
+do $chk1$ begin raise notice 'checkpoint 1/6: profiles criada.'; end $chk1$;
 
 -- =========================================================================
 -- 2. PRODUCTS — módulos comercializados pelo CHURCH-LAB
@@ -120,7 +120,7 @@ create unique index if not exists idx_subscription_cycles_one_active_per_subscri
   on public.subscription_cycles (subscription_id)
   where (status = 'active');
 
-do $$ begin raise notice 'checkpoint 2/6: products, plans, subscriptions e subscription_cycles criadas.'; end $$;
+do $chk2$ begin raise notice 'checkpoint 2/6: products, plans, subscriptions e subscription_cycles criadas.'; end $chk2$;
 
 -- =========================================================================
 -- 6. CATEGORIES
@@ -241,7 +241,7 @@ create table if not exists public.credit_transactions (
 
 comment on table public.credit_transactions is 'Auditoria de movimentação de créditos. Linhas nunca são apagadas pela aplicação.';
 
-do $$ begin raise notice 'checkpoint 3/6: categories, tags, psd_files, psd_categories, psd_tags, favorites, downloads e credit_transactions criadas.'; end $$;
+do $chk3$ begin raise notice 'checkpoint 3/6: categories, tags, psd_files, psd_categories, psd_tags, favorites, downloads e credit_transactions criadas.'; end $chk3$;
 
 -- =========================================================================
 -- ÍNDICES
@@ -270,7 +270,7 @@ create index if not exists idx_downloads_subscription_cycle_id on public.downloa
 create index if not exists idx_credit_transactions_user_id on public.credit_transactions (user_id);
 create index if not exists idx_credit_transactions_subscription_cycle_id on public.credit_transactions (subscription_cycle_id);
 
-do $$ begin raise notice 'checkpoint 4/6: índices criados.'; end $$;
+do $chk4$ begin raise notice 'checkpoint 4/6: índices criados.'; end $chk4$;
 
 -- =========================================================================
 -- TRIGGERS — updated_at automático
@@ -279,12 +279,12 @@ do $$ begin raise notice 'checkpoint 4/6: índices criados.'; end $$;
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
-as $$
+as $set_updated_at$
 begin
   new.updated_at = now();
   return new;
 end;
-$$;
+$set_updated_at$;
 
 drop trigger if exists trg_profiles_updated_at on public.profiles;
 create trigger trg_profiles_updated_at before update on public.profiles
@@ -322,7 +322,7 @@ returns trigger
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $handle_new_user$
 begin
   insert into public.profiles (id, full_name, avatar_url)
   values (
@@ -333,7 +333,7 @@ begin
   on conflict (id) do nothing;
   return new;
 end;
-$$;
+$handle_new_user$;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
@@ -444,7 +444,7 @@ create policy "Users can view own credit transactions" on public.credit_transact
 -- pelo cliente autenticado comum — por isso nenhuma policy de
 -- insert/update/delete foi criada para "authenticated" nessas tabelas.
 
-do $$ begin raise notice 'checkpoint 5/6: RLS habilitada e policies aplicadas.'; end $$;
+do $chk5$ begin raise notice 'checkpoint 5/6: RLS habilitada e policies aplicadas.'; end $chk5$;
 
 -- =========================================================================
 -- FUNÇÕES — regra central de consumo de créditos e ciclo de vida do ciclo
@@ -462,7 +462,7 @@ returns public.subscription_cycles
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $start_subscription_cycle$
 declare
   v_user_id uuid;
   v_credits integer;
@@ -489,7 +489,7 @@ begin
 
   return v_cycle;
 end;
-$$;
+$start_subscription_cycle$;
 
 revoke execute on function public.start_subscription_cycle(uuid, timestamptz, timestamptz) from public;
 grant execute on function public.start_subscription_cycle(uuid, timestamptz, timestamptz) to service_role;
@@ -501,7 +501,7 @@ returns public.subscription_cycles
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $expire_subscription_cycle$
 declare
   v_cycle public.subscription_cycles;
   v_remaining integer;
@@ -530,7 +530,7 @@ begin
 
   return v_cycle;
 end;
-$$;
+$expire_subscription_cycle$;
 
 revoke execute on function public.expire_subscription_cycle(uuid) from public;
 grant execute on function public.expire_subscription_cycle(uuid) to service_role;
@@ -544,7 +544,7 @@ returns public.downloads
 language plpgsql
 security definer
 set search_path = public
-as $$
+as $redeem_psd_credits$
 declare
   v_user_id uuid := auth.uid();
   v_psd public.psd_files;
@@ -603,7 +603,7 @@ begin
 
   return v_download;
 end;
-$$;
+$redeem_psd_credits$;
 
 revoke execute on function public.redeem_psd_credits(uuid) from public;
 grant execute on function public.redeem_psd_credits(uuid) to authenticated;
@@ -616,7 +616,7 @@ grant execute on function public.redeem_psd_credits(uuid) to authenticated;
 -- transaction_type = 'bonus' (amount > 0) — a estrutura já suporta isso,
 -- sem precisar de tabela nova. Fluxo de compra/checkout fica para depois.
 
-do $$ begin raise notice 'checkpoint 6/6: funções start_subscription_cycle, expire_subscription_cycle e redeem_psd_credits criadas.'; end $$;
-do $$ begin raise notice 'CHURCH-LAB ASSETS: schema principal criado com sucesso (tabelas, índices, triggers, RLS, policies e funções).'; end $$;
+do $chk6$ begin raise notice 'checkpoint 6/6: funções start_subscription_cycle, expire_subscription_cycle e redeem_psd_credits criadas.'; end $chk6$;
+do $chk7$ begin raise notice 'CHURCH-LAB ASSETS: schema principal criado com sucesso (tabelas, índices, triggers, RLS, policies e funções).'; end $chk7$;
 
 commit;
