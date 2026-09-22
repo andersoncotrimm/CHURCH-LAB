@@ -5,6 +5,12 @@ export interface Category {
   description: string | null;
 }
 
+export interface CategoryFormValues {
+  name: string;
+  slug: string;
+  description: string;
+}
+
 export interface PsdFile {
   id: string;
   title: string;
