@@ -5,7 +5,9 @@ import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
+import { getCategories } from "@/lib/psd";
 import { cn } from "@/lib/utils";
+import type { Category } from "@/lib/types/psd";
 import type { Plan } from "@/lib/types/plan";
 
 export const dynamic = "force-dynamic";
@@ -16,23 +18,24 @@ function formatPrice(price: number) {
 
 export default async function PlanosPage() {
   let typedPlans: Plan[] = [];
+  let categories: Category[] = [];
 
   try {
     const supabase = await createClient();
 
-    const { data: plans } = await supabase
-      .from("plans")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order", { ascending: true });
+    const [{ data: plans }, categoriesData] = await Promise.all([
+      supabase.from("plans").select("*").eq("is_active", true).order("display_order", { ascending: true }),
+      getCategories(supabase),
+    ]);
 
     typedPlans = (plans ?? []) as Plan[];
+    categories = categoriesData;
   } catch (error) {
     console.error("Falha ao carregar planos:", error);
   }
 
   return (
-    <PublicShell>
+    <PublicShell categories={categories}>
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-semibold uppercase tracking-widest text-accent">

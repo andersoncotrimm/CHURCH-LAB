@@ -7,19 +7,22 @@ import { Sidebar } from "@/components/ui/sidebar";
 import { PlatformHeader } from "@/components/app/platform-header";
 import { Avatar } from "@/components/ui/avatar";
 import { Logo } from "@/components/brand/logo";
-import { APP_NAV_ITEMS } from "@/lib/nav";
+import { APP_NAV_ITEMS, withPsdCategories } from "@/lib/nav";
 import { createClient } from "@/utils/supabase/client";
+import type { Category } from "@/lib/types/psd";
 
 export interface PlatformShellProps {
   user: { name: string; email?: string; avatarUrl?: string };
   planName: string | null;
   credits: number | null;
+  categories?: Category[];
   children: React.ReactNode;
 }
 
-export function PlatformShell({ user, planName, credits, children }: PlatformShellProps) {
+export function PlatformShell({ user, planName, credits, categories = [], children }: PlatformShellProps) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const items = React.useMemo(() => withPsdCategories(APP_NAV_ITEMS, categories), [categories]);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -31,7 +34,7 @@ export function PlatformShell({ user, planName, credits, children }: PlatformShe
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar
-        items={APP_NAV_ITEMS}
+        items={items}
         brand={
           <Link href="/dashboard">
             <Logo />

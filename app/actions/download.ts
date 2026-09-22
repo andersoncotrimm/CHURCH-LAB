@@ -66,7 +66,7 @@ export async function downloadPsd(psdId: string): Promise<DownloadResult> {
     .eq("id", psdId)
     .single();
 
-  if (psdError || !psd) {
+  if (psdError || !psd?.file_path) {
     return { status: "error", message: "Arquivo não encontrado." };
   }
 

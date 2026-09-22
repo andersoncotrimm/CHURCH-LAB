@@ -5,15 +5,23 @@ import Link from "next/link";
 import { Sidebar } from "@/components/ui/sidebar";
 import { PublicHeader } from "@/components/public/public-header";
 import { Logo } from "@/components/brand/logo";
-import { PUBLIC_NAV_ITEMS } from "@/lib/nav";
+import { PUBLIC_NAV_ITEMS, withPsdCategories } from "@/lib/nav";
+import type { Category } from "@/lib/types/psd";
 
-export function PublicShell({ children }: { children: React.ReactNode }) {
+export function PublicShell({
+  children,
+  categories = [],
+}: {
+  children: React.ReactNode;
+  categories?: Category[];
+}) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const items = React.useMemo(() => withPsdCategories(PUBLIC_NAV_ITEMS, categories), [categories]);
 
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar
-        items={PUBLIC_NAV_ITEMS}
+        items={items}
         brand={
           <Link href="/">
             <Logo />

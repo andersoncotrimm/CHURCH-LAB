@@ -31,7 +31,7 @@ export default async function CategoriasPage() {
   }
 
   return (
-    <PublicShell>
+    <PublicShell categories={categories}>
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-semibold uppercase tracking-widest text-accent">

@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
-import { getPublishedPsds, getPopularCategories, type PopularCategory } from "@/lib/psd";
-import type { PsdFile } from "@/lib/types/psd";
+import { getPublishedPsds, getPopularCategories, getCategories, type PopularCategory } from "@/lib/psd";
+import type { Category, PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +20,7 @@ export default async function LandingPage() {
   let userId: string | null = null;
   let allPsds: PsdFile[] = [];
   let popularCategories: PopularCategory[] = [];
+  let categories: Category[] = [];
 
   try {
     const supabase = await createClient();
@@ -30,9 +31,10 @@ export default async function LandingPage() {
     userId = user?.id ?? null;
 
     if (!userId) {
-      [allPsds, popularCategories] = await Promise.all([
+      [allPsds, popularCategories, categories] = await Promise.all([
         getPublishedPsds(supabase),
         getPopularCategories(supabase),
+        getCategories(supabase),
       ]);
     }
   } catch (error) {
@@ -52,7 +54,7 @@ export default async function LandingPage() {
   const newItem = allPsds.find((p) => !excludeIds.has(p.id)) ?? null;
 
   return (
-    <PublicShell>
+    <PublicShell categories={categories}>
       <div className="mx-auto flex max-w-6xl flex-col gap-8">
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">

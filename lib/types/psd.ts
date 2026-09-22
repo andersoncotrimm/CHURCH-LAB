@@ -18,7 +18,9 @@ export interface PsdFile {
   description: string | null;
   thumbnail_url: string | null;
   preview_url: string | null;
-  file_path: string;
+  file_path: string | null;
+  canva_url: string | null;
+  slides_count: number | null;
   file_size: number | null;
   file_format: string | null;
   dimensions: string | null;

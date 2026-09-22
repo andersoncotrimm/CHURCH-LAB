@@ -8,6 +8,7 @@ import { PsdFeatureCard } from "@/components/psd/psd-feature-card";
 import { RedownloadButton } from "@/components/psd/redownload-button";
 import { createClient } from "@/utils/supabase/server";
 import { getDashboardData } from "@/lib/dashboard";
+import { getUserCreditsSummary } from "@/lib/credits";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,11 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
 
-  const { continueItem, favoriteItem, newItem, popularCategories } = await getDashboardData(supabase, user.id);
+  const [{ continueItem, favoriteItem, newItem, popularCategories }, credits] = await Promise.all([
+    getDashboardData(supabase, user.id),
+    getUserCreditsSummary(supabase, user.id),
+  ]);
+  const availableCredits = credits?.available ?? null;
 
   const firstName = (profile?.full_name || user.email || "").split(" ")[0];
 
@@ -74,6 +79,7 @@ export default async function DashboardPage() {
               psd={favoriteItem}
               isFavorited
               isLoggedIn
+              availableCredits={availableCredits}
               topLeftBadge={
                 <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
                   <Heart className="h-3 w-3 fill-current" />
@@ -98,6 +104,7 @@ export default async function DashboardPage() {
             <PsdCard
               psd={newItem}
               isLoggedIn
+              availableCredits={availableCredits}
               topLeftBadge={
                 <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
                   <Sparkles className="h-3 w-3" />

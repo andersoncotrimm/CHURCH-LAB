@@ -12,6 +12,7 @@ import {
   Heart,
 } from "lucide-react";
 import type { SidebarItem } from "@/components/ui/sidebar";
+import type { Category } from "@/lib/types/psd";
 
 export const APP_NAV_ITEMS: SidebarItem[] = [
   { label: "Início", href: "/dashboard", icon: <Home className="h-[18px] w-[18px]" /> },
@@ -37,3 +38,22 @@ export const PUBLIC_NAV_ITEMS: SidebarItem[] = [
   { label: "Sistemas", href: "/sistemas", icon: <Grid3x3 className="h-[18px] w-[18px]" />, disabled: true },
   { label: "Planos", href: "/planos", icon: <Tag className="h-[18px] w-[18px]" />, sectionLabel: "Conta" },
 ];
+
+/**
+ * Injeta as categorias reais (vindas do banco) como submenu suspenso do
+ * item "PSD" — mesma lista que hoje fica numa coluna separada em /psd,
+ * agora dentro do menu lateral persistente.
+ */
+export function withPsdCategories(items: SidebarItem[], categories: Category[]): SidebarItem[] {
+  if (categories.length === 0) return items;
+  return items.map((item) => {
+    if (item.href !== "/psd") return item;
+    return {
+      ...item,
+      children: [
+        { label: "Todos", href: "/psd" },
+        ...categories.map((category) => ({ label: category.name, href: `/psd?categoria=${category.slug}` })),
+      ],
+    };
+  });
+}

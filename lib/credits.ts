@@ -56,3 +56,17 @@ export async function getUserCreditsSummary(
     subscriptionStatus: subscription.status,
   };
 }
+
+export type AssetCtaState = "guest" | "no-subscription" | "insufficient" | "ready";
+
+/** Mesma lógica de decisão de CTA usada na página de detalhes, reaproveitada nos cards/modal. */
+export function computeCtaState(
+  isLoggedIn: boolean,
+  availableCredits: number | null,
+  creditCost: number
+): AssetCtaState {
+  if (!isLoggedIn) return "guest";
+  if (availableCredits === null) return "no-subscription";
+  if (availableCredits < creditCost) return "insufficient";
+  return "ready";
+}

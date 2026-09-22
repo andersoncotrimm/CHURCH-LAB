@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { LayoutGrid, ImageOff } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { PsdCard } from "@/components/psd/psd-card";
@@ -6,13 +5,13 @@ import { LibraryControls } from "@/components/psd/library-controls";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
 import { getPublishedPsds, getCategories } from "@/lib/psd";
-import { cn } from "@/lib/utils";
+import { getUserCreditsSummary } from "@/lib/credits";
 import type { Category, PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
 interface PsdLibraryPageProps {
-  searchParams: { categoria?: string; busca?: string; ordenar?: string };
+  searchParams: { categoria?: string; busca?: string; ordenar?: string; tipo?: string };
 }
 
 export default async function PsdLibraryPage({ searchParams }: PsdLibraryPageProps) {
@@ -22,6 +21,7 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
   let allPsds: PsdFile[] = [];
   let categories: Category[] = [];
   let favoritedIds = new Set<string>();
+  let availableCredits: number | null = null;
 
   try {
     const supabase = await createClient();
@@ -34,8 +34,12 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
     [allPsds, categories] = await Promise.all([getPublishedPsds(supabase), getCategories(supabase)]);
 
     if (userId) {
-      const { data: favorites } = await supabase.from("favorites").select("psd_id").eq("user_id", userId);
+      const [{ data: favorites }, credits] = await Promise.all([
+        supabase.from("favorites").select("psd_id").eq("user_id", userId),
+        getUserCreditsSummary(supabase, userId),
+      ]);
       favoritedIds = new Set((favorites ?? []).map((f) => f.psd_id));
+      availableCredits = credits?.available ?? null;
     }
   } catch (error) {
     console.error("Falha ao carregar a biblioteca de PSDs:", error);
@@ -44,11 +48,18 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
   const categoria = searchParams.categoria;
   const busca = (searchParams.busca ?? "").trim().toLowerCase();
   const ordenar = searchParams.ordenar ?? "recentes";
+  const tipo = searchParams.tipo;
 
   let filtered = allPsds;
 
   if (categoria) {
     filtered = filtered.filter((psd) => psd.categories.some((c) => c.slug === categoria));
+  }
+
+  if (tipo === "psd") {
+    filtered = filtered.filter((psd) => !!psd.file_path);
+  } else if (tipo === "canva") {
+    filtered = filtered.filter((psd) => !!psd.canva_url);
   }
 
   if (busca) {
@@ -71,78 +82,44 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
   });
 
   return (
-    <PublicShell>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row">
-        <aside className="shrink-0 lg:w-56">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-            Categorias
+    <PublicShell categories={categories}>
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Biblioteca PSD
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Materiais profissionais prontos para editar.
           </p>
-          <nav className="flex flex-row flex-wrap gap-2 lg:flex-col lg:gap-1">
-            <Link
-              href="/psd"
-              className={cn(
-                "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                !categoria
-                  ? "bg-accent-50 text-accent-700"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              Todos
-            </Link>
-            {categories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/psd?categoria=${cat.slug}`}
-                className={cn(
-                  "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  categoria === cat.slug
-                    ? "bg-accent-50 text-accent-700"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                {cat.name}
-              </Link>
-            ))}
-          </nav>
-        </aside>
-
-        <div className="min-w-0 flex-1">
-          <div className="mb-6">
-            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-              Biblioteca PSD
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Materiais profissionais prontos para editar.
-            </p>
-          </div>
-
-          <div className="mb-6">
-            <LibraryControls />
-          </div>
-
-          {filtered.length === 0 ? (
-            <EmptyState
-              icon={allPsds.length === 0 ? <ImageOff className="h-6 w-6" /> : <LayoutGrid className="h-6 w-6" />}
-              title={allPsds.length === 0 ? "Nenhum PSD publicado ainda" : "Nenhum resultado encontrado"}
-              description={
-                allPsds.length === 0
-                  ? "Assim que a equipe publicar materiais no admin, eles aparecem aqui."
-                  : "Ajuste a busca, categoria ou ordenação para encontrar o que procura."
-              }
-            />
-          ) : (
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-              {filtered.map((psd) => (
-                <PsdCard
-                  key={psd.id}
-                  psd={psd}
-                  isFavorited={favoritedIds.has(psd.id)}
-                  isLoggedIn={!!userId}
-                />
-              ))}
-            </div>
-          )}
         </div>
+
+        <div className="mb-6">
+          <LibraryControls />
+        </div>
+
+        {filtered.length === 0 ? (
+          <EmptyState
+            icon={allPsds.length === 0 ? <ImageOff className="h-6 w-6" /> : <LayoutGrid className="h-6 w-6" />}
+            title={allPsds.length === 0 ? "Nenhum PSD publicado ainda" : "Nenhum resultado encontrado"}
+            description={
+              allPsds.length === 0
+                ? "Assim que a equipe publicar materiais no admin, eles aparecem aqui."
+                : "Ajuste a busca, categoria ou ordenação para encontrar o que procura."
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+            {filtered.map((psd) => (
+              <PsdCard
+                key={psd.id}
+                psd={psd}
+                isFavorited={favoritedIds.has(psd.id)}
+                isLoggedIn={!!userId}
+                availableCredits={availableCredits}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </PublicShell>
   );

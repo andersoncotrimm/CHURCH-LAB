@@ -43,7 +43,7 @@ export async function getRedownloadUrl(psdId: string): Promise<RedownloadResult>
     .eq("id", psdId)
     .single();
 
-  if (psdError || !psd) {
+  if (psdError || !psd?.file_path) {
     return { status: "error", message: "Arquivo não encontrado." };
   }
 

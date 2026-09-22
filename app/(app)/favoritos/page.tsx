@@ -4,6 +4,7 @@ import { PsdCard } from "@/components/psd/psd-card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/server";
+import { getUserCreditsSummary } from "@/lib/credits";
 import type { PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,9 @@ export default async function FavoritosPage() {
   } = await supabase.auth.getUser();
 
   if (!user) return null;
+
+  const credits = await getUserCreditsSummary(supabase, user.id);
+  const availableCredits = credits?.available ?? null;
 
   const { data: favorites } = await supabase
     .from("favorites")
@@ -66,7 +70,7 @@ export default async function FavoritosPage() {
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
           {psds.map((psd) => (
-            <PsdCard key={psd.id} psd={psd} isFavorited isLoggedIn />
+            <PsdCard key={psd.id} psd={psd} isFavorited isLoggedIn availableCredits={availableCredits} />
           ))}
         </div>
       )}

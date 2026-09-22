@@ -13,6 +13,8 @@ interface PsdFields {
   description: string;
   credit_cost: number;
   dimensions: string;
+  canva_url: string;
+  slides_count: number | null;
   is_published: boolean;
   is_featured: boolean;
   category_ids: string[];
@@ -24,6 +26,8 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
   const description = String(formData.get("description") ?? "").trim();
   const creditCostRaw = String(formData.get("credit_cost") ?? "");
   const dimensions = String(formData.get("dimensions") ?? "").trim();
+  const canvaUrl = String(formData.get("canva_url") ?? "").trim();
+  const slidesCountRaw = String(formData.get("slides_count") ?? "").trim();
   const isPublished = formData.get("is_published") === "on";
   const isFeatured = formData.get("is_featured") === "on";
   const categoryIds = formData.getAll("category_ids").map(String).filter(Boolean);
@@ -39,8 +43,31 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
     return { error: "Custo em créditos inválido (use um número inteiro ≥ 0)." };
   }
 
+  if (canvaUrl && !/^https:\/\//.test(canvaUrl)) {
+    return { error: "Link do Canva precisa começar com https://" };
+  }
+
+  let slidesCount: number | null = null;
+  if (slidesCountRaw) {
+    slidesCount = Number(slidesCountRaw);
+    if (!Number.isInteger(slidesCount) || slidesCount < 1) {
+      return { error: "Quantidade de slides inválida (use um número inteiro ≥ 1)." };
+    }
+  }
+
   return {
-    values: { title, slug, description, credit_cost: creditCost, dimensions, is_published: isPublished, is_featured: isFeatured, category_ids: categoryIds },
+    values: {
+      title,
+      slug,
+      description,
+      credit_cost: creditCost,
+      dimensions,
+      canva_url: canvaUrl,
+      slides_count: slidesCount,
+      is_published: isPublished,
+      is_featured: isFeatured,
+      category_ids: categoryIds,
+    },
   };
 }
 
@@ -82,8 +109,11 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
   if ("error" in parsed) return { error: parsed.error };
 
   const originalFile = formData.get("original") as File | null;
-  if (!originalFile || originalFile.size === 0) {
-    return { error: "O arquivo PSD original é obrigatório." };
+  const hasOriginalFile = !!originalFile && originalFile.size > 0;
+  const { canva_url: canvaUrl } = parsed.values;
+
+  if (!hasOriginalFile && !canvaUrl) {
+    return { error: "Envie o arquivo PSD original ou informe um link do Canva (pelo menos um dos dois)." };
   }
 
   const thumbnailFile = formData.get("thumbnail") as File | null;
@@ -92,12 +122,16 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
 
   const supabase = await createClient();
 
-  const originalExt = extensionOf(originalFile, "psd");
-  const originalPath = `${slug}/original.${originalExt}`;
-  const { error: originalUploadError } = await supabase.storage
-    .from("psd-originals")
-    .upload(originalPath, originalFile, { upsert: true, contentType: originalFile.type || "application/octet-stream" });
-  if (originalUploadError) return { error: `Falha ao enviar o arquivo PSD: ${originalUploadError.message}` };
+  let originalPath: string | null = null;
+  let originalExt: string | null = null;
+  if (hasOriginalFile) {
+    originalExt = extensionOf(originalFile!, "psd");
+    originalPath = `${slug}/original.${originalExt}`;
+    const { error: originalUploadError } = await supabase.storage
+      .from("psd-originals")
+      .upload(originalPath, originalFile!, { upsert: true, contentType: originalFile!.type || "application/octet-stream" });
+    if (originalUploadError) return { error: `Falha ao enviar o arquivo PSD: ${originalUploadError.message}` };
+  }
 
   let thumbnailUrl: string | null = null;
   if (thumbnailFile && thumbnailFile.size > 0) {
@@ -128,9 +162,11 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
       thumbnail_url: thumbnailUrl,
       preview_url: previewUrl,
       file_path: originalPath,
-      file_size: originalFile.size,
-      file_format: originalExt.toUpperCase(),
+      file_size: hasOriginalFile ? originalFile!.size : null,
+      file_format: originalExt ? originalExt.toUpperCase() : null,
       dimensions: parsed.values.dimensions || null,
+      canva_url: canvaUrl || null,
+      slides_count: parsed.values.slides_count,
       credit_cost: parsed.values.credit_cost,
       is_published: parsed.values.is_published,
       is_featured: parsed.values.is_featured,
@@ -166,7 +202,7 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
 
   if (fetchError || !existing) return { error: "PSD não encontrado." };
 
-  const { slug } = parsed.values;
+  const { slug, canva_url: canvaUrl } = parsed.values;
   const originalFile = formData.get("original") as File | null;
   const thumbnailFile = formData.get("thumbnail") as File | null;
   const previewFile = formData.get("preview") as File | null;
@@ -183,6 +219,10 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
     if (error) return { error: `Falha ao enviar o arquivo PSD: ${error.message}` };
     fileSize = originalFile.size;
     fileFormat = ext.toUpperCase();
+  }
+
+  if (!filePath && !canvaUrl) {
+    return { error: "O PSD precisa ter o arquivo original ou um link do Canva (pelo menos um dos dois)." };
   }
 
   let thumbnailUrl = existing.thumbnail_url;
@@ -217,6 +257,8 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
       file_size: fileSize,
       file_format: fileFormat,
       dimensions: parsed.values.dimensions || null,
+      canva_url: canvaUrl || null,
+      slides_count: parsed.values.slides_count,
       credit_cost: parsed.values.credit_cost,
       is_published: parsed.values.is_published,
       is_featured: parsed.values.is_featured,

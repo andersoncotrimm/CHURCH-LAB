@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import { getUserCreditsSummary } from "@/lib/credits";
+import { getCategories } from "@/lib/psd";
 import { PlatformShell } from "@/components/app/platform-shell";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +23,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .eq("id", user.id)
     .single();
 
-  const credits = await getUserCreditsSummary(supabase, user.id);
+  const [credits, categories] = await Promise.all([
+    getUserCreditsSummary(supabase, user.id),
+    getCategories(supabase),
+  ]);
 
   return (
     <PlatformShell
@@ -33,6 +37,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       }}
       planName={credits?.planName ?? null}
       credits={credits?.available ?? null}
+      categories={categories}
     >
       {children}
     </PlatformShell>

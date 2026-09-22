@@ -144,6 +144,18 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
           />
         </div>
 
+        <Input
+          label="Quantidade de slides (opcional)"
+          name="slides_count"
+          type="number"
+          step="1"
+          min="1"
+          defaultValue={psd?.slides_count ?? ""}
+          placeholder="Ex: 5 (para carrosséis)"
+          hint="Mostrado no card de detalhes quando o material for um carrossel."
+          disabled={loading}
+        />
+
         <div>
           <p className="mb-1.5 text-sm font-medium text-foreground">Categorias</p>
           {categories.length === 0 ? (
@@ -205,13 +217,12 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
 
           <div>
             <label htmlFor="original" className="mb-1 block text-xs font-medium text-muted-foreground">
-              Arquivo PSD original {isEditing ? "(opcional — deixe em branco para manter o atual)" : "(obrigatório)"}
+              Arquivo PSD original {isEditing ? "(opcional — deixe em branco para manter o atual)" : "(opcional se preencher o link do Canva abaixo)"}
             </label>
             <input
               id="original"
               name="original"
               type="file"
-              required={!isEditing}
               disabled={loading}
               className="w-full text-xs text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-foreground"
             />
@@ -222,6 +233,16 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
               </p>
             )}
           </div>
+
+          <Input
+            label="Link do template no Canva (opcional se enviar o PSD acima)"
+            name="canva_url"
+            type="url"
+            defaultValue={psd?.canva_url ?? ""}
+            placeholder="https://www.canva.com/design/..."
+            hint="Pelo menos um dos dois — arquivo PSD ou link do Canva — precisa existir."
+            disabled={loading}
+          />
         </div>
 
         <div className="flex items-center gap-6 pt-1">
