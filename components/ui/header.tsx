@@ -10,10 +10,11 @@ export interface HeaderProps {
   user: { name: string; role?: string; avatarUrl?: string };
   notificationCount?: number;
   onMenuClick?: () => void;
+  onSignOut?: () => void;
   className?: string;
 }
 
-function Header({ user, notificationCount = 0, onMenuClick, className }: HeaderProps) {
+function Header({ user, notificationCount = 0, onMenuClick, onSignOut, className }: HeaderProps) {
   return (
     <header
       className={cn(
@@ -78,7 +79,12 @@ function Header({ user, notificationCount = 0, onMenuClick, className }: HeaderP
           items={[
             { label: "Meu perfil", icon: <UserIcon className="h-4 w-4" /> },
             { label: "Configurações", icon: <Settings className="h-4 w-4" /> },
-            { label: "Sair", icon: <LogOut className="h-4 w-4" />, destructive: true },
+            {
+              label: "Sair",
+              icon: <LogOut className="h-4 w-4" />,
+              destructive: true,
+              onSelect: onSignOut,
+            },
           ]}
         />
       </div>

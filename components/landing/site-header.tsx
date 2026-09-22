@@ -11,6 +11,7 @@ const NAV_LINKS = [
   { label: "Recursos", href: "#recursos" },
   { label: "Como funciona", href: "#como-funciona" },
   { label: "Para igrejas", href: "#para-igrejas" },
+  { label: "Planos", href: "/planos" },
 ];
 
 function SiteHeader() {

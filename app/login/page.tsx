@@ -2,19 +2,67 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Eye, EyeOff, Lock, Mail, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, Lock, Mail, ArrowLeft, AlertCircle, MailCheck } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/tabs";
+import { createClient } from "@/utils/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [mode, setMode] = React.useState<"login" | "signup">("login");
   const [showPassword, setShowPassword] = React.useState(false);
+  const [loading, setLoading] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [confirmEmailSent, setConfirmEmailSent] = React.useState(false);
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    // TODO: integrar com Supabase Auth (sign in / sign up).
+    setErrorMessage(null);
+    setConfirmEmailSent(false);
+
+    const formData = new FormData(event.currentTarget);
+    const email = String(formData.get("email") ?? "");
+    const password = String(formData.get("password") ?? "");
+    const fullName = String(formData.get("name") ?? "");
+
+    const supabase = createClient();
+    setLoading(true);
+
+    if (mode === "login") {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      setLoading(false);
+      if (error) {
+        setErrorMessage(
+          error.message === "Invalid login credentials"
+            ? "E-mail ou senha incorretos."
+            : error.message
+        );
+        return;
+      }
+      router.push("/dashboard");
+      router.refresh();
+    } else {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { full_name: fullName } },
+      });
+      setLoading(false);
+      if (error) {
+        setErrorMessage(error.message);
+        return;
+      }
+      if (data.session) {
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        // Confirmação de e-mail habilitada no projeto: ainda não há sessão.
+        setConfirmEmailSent(true);
+      }
+    }
   }
 
   return (
@@ -64,7 +112,11 @@ export default function LoginPage() {
           <Tabs
             className="mb-8 w-full"
             value={mode}
-            onValueChange={(value) => setMode(value as "login" | "signup")}
+            onValueChange={(value) => {
+              setMode(value as "login" | "signup");
+              setErrorMessage(null);
+              setConfirmEmailSent(false);
+            }}
             items={[
               { value: "login", label: "Entrar" },
               { value: "signup", label: "Criar conta" },
@@ -82,9 +134,29 @@ export default function LoginPage() {
             </p>
           </div>
 
+          {errorMessage && (
+            <div className="mb-4 flex items-start gap-2 rounded-lg border border-danger/30 bg-danger/5 p-3 text-sm text-danger">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+              {errorMessage}
+            </div>
+          )}
+
+          {confirmEmailSent && (
+            <div className="mb-4 flex items-start gap-2 rounded-lg border border-success/30 bg-success/5 p-3 text-sm text-success">
+              <MailCheck className="mt-0.5 h-4 w-4 shrink-0" />
+              Conta criada! Confirme seu e-mail para poder entrar.
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "signup" && (
-              <Input label="Nome completo" name="name" placeholder="Seu nome" autoComplete="name" />
+              <Input
+                label="Nome completo"
+                name="name"
+                placeholder="Seu nome"
+                autoComplete="name"
+                disabled={loading}
+              />
             )}
 
             <Input
@@ -95,6 +167,7 @@ export default function LoginPage() {
               autoComplete="email"
               startIcon={<Mail className="h-4 w-4" />}
               required
+              disabled={loading}
             />
 
             <Input
@@ -105,6 +178,8 @@ export default function LoginPage() {
               autoComplete={mode === "login" ? "current-password" : "new-password"}
               startIcon={<Lock className="h-4 w-4" />}
               required
+              minLength={6}
+              disabled={loading}
               endAdornment={
                 <button
                   type="button"
@@ -141,7 +216,7 @@ export default function LoginPage() {
               </label>
             )}
 
-            <Button type="submit" variant="accent" size="lg" className="w-full">
+            <Button type="submit" variant="accent" size="lg" className="w-full" loading={loading}>
               {mode === "login" ? "Entrar" : "Criar conta"}
             </Button>
           </form>
