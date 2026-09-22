@@ -7,6 +7,14 @@
 -- Este arquivo não apaga nem sobrescreve nenhuma estrutura existente:
 -- todas as instruções usam "if not exists" / "create or replace" / checagens
 -- explícitas, e podem ser reexecutadas com segurança (idempotente).
+--
+-- Roda dentro de UMA transação explícita (begin ... commit): ou tudo é
+-- criado, ou nada é. Se der erro no meio, o Postgres mostra exatamente em
+-- qual statement parou e a transação inteira é revertida automaticamente —
+-- não fica schema pela metade. Os "raise notice" ao longo do arquivo servem
+-- de checkpoint: o último que aparecer no log é o ponto exato onde parou.
+
+begin;
 
 create extension if not exists "pgcrypto";
 
@@ -24,6 +32,8 @@ create table if not exists public.profiles (
 );
 
 comment on table public.profiles is 'Dados de perfil do núcleo de usuários do CHURCH-LAB (1:1 com auth.users).';
+
+do $$ begin raise notice 'checkpoint 1/6: profiles criada.'; end $$;
 
 -- =========================================================================
 -- 2. PRODUCTS — módulos comercializados pelo CHURCH-LAB
@@ -109,6 +119,8 @@ comment on table public.subscription_cycles is 'Ciclo de créditos de uma assina
 create unique index if not exists idx_subscription_cycles_one_active_per_subscription
   on public.subscription_cycles (subscription_id)
   where (status = 'active');
+
+do $$ begin raise notice 'checkpoint 2/6: products, plans, subscriptions e subscription_cycles criadas.'; end $$;
 
 -- =========================================================================
 -- 6. CATEGORIES
@@ -229,6 +241,8 @@ create table if not exists public.credit_transactions (
 
 comment on table public.credit_transactions is 'Auditoria de movimentação de créditos. Linhas nunca são apagadas pela aplicação.';
 
+do $$ begin raise notice 'checkpoint 3/6: categories, tags, psd_files, psd_categories, psd_tags, favorites, downloads e credit_transactions criadas.'; end $$;
+
 -- =========================================================================
 -- ÍNDICES
 -- =========================================================================
@@ -255,6 +269,8 @@ create index if not exists idx_downloads_subscription_cycle_id on public.downloa
 
 create index if not exists idx_credit_transactions_user_id on public.credit_transactions (user_id);
 create index if not exists idx_credit_transactions_subscription_cycle_id on public.credit_transactions (subscription_cycle_id);
+
+do $$ begin raise notice 'checkpoint 4/6: índices criados.'; end $$;
 
 -- =========================================================================
 -- TRIGGERS — updated_at automático
@@ -428,6 +444,8 @@ create policy "Users can view own credit transactions" on public.credit_transact
 -- pelo cliente autenticado comum — por isso nenhuma policy de
 -- insert/update/delete foi criada para "authenticated" nessas tabelas.
 
+do $$ begin raise notice 'checkpoint 5/6: RLS habilitada e policies aplicadas.'; end $$;
+
 -- =========================================================================
 -- FUNÇÕES — regra central de consumo de créditos e ciclo de vida do ciclo
 -- =========================================================================
@@ -590,27 +608,15 @@ $$;
 revoke execute on function public.redeem_psd_credits(uuid) from public;
 grant execute on function public.redeem_psd_credits(uuid) to authenticated;
 
--- =========================================================================
--- STORAGE — buckets separados (thumbnail / preview / arquivo original)
--- =========================================================================
--- O arquivo PSD original nunca fica em bucket público. A entrega via signed
--- URL (validando assinatura + créditos) fica para uma etapa futura; por ora
--- psd_files.file_path só referencia o objeto protegido.
+-- NOTA sobre "compra de créditos adicionais": a fórmula central de saldo
+-- continua sendo available = credits_granted - credits_used (conforme a
+-- regra do ciclo). Um crédito bônus/extra comprado fora do ciclo mensal
+-- deve, quando essa etapa for implementada, (1) somar ao credits_granted
+-- do ciclo ativo e (2) registrar uma linha em credit_transactions com
+-- transaction_type = 'bonus' (amount > 0) — a estrutura já suporta isso,
+-- sem precisar de tabela nova. Fluxo de compra/checkout fica para depois.
 
-insert into storage.buckets (id, name, public)
-values
-  ('psd-thumbnails', 'psd-thumbnails', true),
-  ('psd-previews', 'psd-previews', true),
-  ('psd-originals', 'psd-originals', false)
-on conflict (id) do nothing;
+do $$ begin raise notice 'checkpoint 6/6: funções start_subscription_cycle, expire_subscription_cycle e redeem_psd_credits criadas.'; end $$;
+do $$ begin raise notice 'CHURCH-LAB ASSETS: schema principal criado com sucesso (tabelas, índices, triggers, RLS, policies e funções).'; end $$;
 
-drop policy if exists "Public read access to psd thumbnails" on storage.objects;
-create policy "Public read access to psd thumbnails" on storage.objects
-  for select to authenticated, anon using (bucket_id = 'psd-thumbnails');
-
-drop policy if exists "Public read access to psd previews" on storage.objects;
-create policy "Public read access to psd previews" on storage.objects
-  for select to authenticated, anon using (bucket_id = 'psd-previews');
-
--- Nenhuma policy de leitura para "psd-originals": acesso somente via
--- service_role até a implementação do fluxo de signed URL protegido.
+commit;
