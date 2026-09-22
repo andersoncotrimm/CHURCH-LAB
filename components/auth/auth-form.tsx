@@ -40,40 +40,50 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
       return;
     }
 
-    const supabase = createClient();
     setLoading(true);
 
-    if (mode === "login") {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      setLoading(false);
-      if (error) {
-        setErrorMessage(
-          error.message === "Invalid login credentials"
-            ? "E-mail ou senha incorretos."
-            : error.message
-        );
-        return;
-      }
-      router.push("/dashboard");
-      router.refresh();
-    } else {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: { data: { full_name: fullName } },
-      });
-      setLoading(false);
-      if (error) {
-        setErrorMessage(error.message);
-        return;
-      }
-      if (data.session) {
+    try {
+      const supabase = createClient();
+
+      if (mode === "login") {
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          setErrorMessage(
+            error.message === "Invalid login credentials"
+              ? "E-mail ou senha incorretos."
+              : error.message
+          );
+          return;
+        }
         router.push("/dashboard");
         router.refresh();
       } else {
-        // Confirmação de e-mail habilitada no projeto: ainda não há sessão.
-        setConfirmEmailSent(true);
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: { data: { full_name: fullName } },
+        });
+        if (error) {
+          setErrorMessage(error.message);
+          return;
+        }
+        if (data.session) {
+          router.push("/dashboard");
+          router.refresh();
+        } else {
+          // Confirmação de e-mail habilitada no projeto: ainda não há sessão.
+          setConfirmEmailSent(true);
+        }
       }
+    } catch (error) {
+      console.error("Erro inesperado no formulário de autenticação:", error);
+      setErrorMessage(
+        error instanceof Error
+          ? `Erro inesperado: ${error.message}`
+          : "Erro inesperado. Tente novamente em instantes."
+      );
+    } finally {
+      setLoading(false);
     }
   }
 
