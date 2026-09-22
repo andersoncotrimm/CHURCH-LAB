@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { LayoutGrid, ImageOff } from "lucide-react";
-import { SiteHeader } from "@/components/landing/site-header";
-import { SiteFooter } from "@/components/landing/site-footer";
+import { PublicShell } from "@/components/public/public-shell";
 import { PsdCard } from "@/components/psd/psd-card";
 import { LibraryControls } from "@/components/psd/library-controls";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -72,83 +71,79 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
   });
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
-      <main className="flex-1">
-        <div className="container flex flex-col gap-8 py-10 sm:py-14 lg:flex-row">
-          <aside className="shrink-0 lg:w-56">
-            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-              Categorias
-            </p>
-            <nav className="flex flex-row flex-wrap gap-2 lg:flex-col lg:gap-1">
+    <PublicShell>
+      <div className="mx-auto flex max-w-6xl flex-col gap-8 lg:flex-row">
+        <aside className="shrink-0 lg:w-56">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            Categorias
+          </p>
+          <nav className="flex flex-row flex-wrap gap-2 lg:flex-col lg:gap-1">
+            <Link
+              href="/psd"
+              className={cn(
+                "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                !categoria
+                  ? "bg-accent-50 text-accent-700"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
+            >
+              Todos
+            </Link>
+            {categories.map((cat) => (
               <Link
-                href="/psd"
+                key={cat.id}
+                href={`/psd?categoria=${cat.slug}`}
                 className={cn(
                   "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                  !categoria
+                  categoria === cat.slug
                     ? "bg-accent-50 text-accent-700"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                Todos
+                {cat.name}
               </Link>
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  href={`/psd?categoria=${cat.slug}`}
-                  className={cn(
-                    "rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    categoria === cat.slug
-                      ? "bg-accent-50 text-accent-700"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                  )}
-                >
-                  {cat.name}
-                </Link>
-              ))}
-            </nav>
-          </aside>
+            ))}
+          </nav>
+        </aside>
 
-          <div className="min-w-0 flex-1">
-            <div className="mb-6">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-                Biblioteca PSD
-              </h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Materiais profissionais prontos para editar.
-              </p>
-            </div>
-
-            <div className="mb-6">
-              <LibraryControls />
-            </div>
-
-            {filtered.length === 0 ? (
-              <EmptyState
-                icon={allPsds.length === 0 ? <ImageOff className="h-6 w-6" /> : <LayoutGrid className="h-6 w-6" />}
-                title={allPsds.length === 0 ? "Nenhum PSD publicado ainda" : "Nenhum resultado encontrado"}
-                description={
-                  allPsds.length === 0
-                    ? "Assim que a equipe publicar materiais no admin, eles aparecem aqui."
-                    : "Ajuste a busca, categoria ou ordenação para encontrar o que procura."
-                }
-              />
-            ) : (
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
-                {filtered.map((psd) => (
-                  <PsdCard
-                    key={psd.id}
-                    psd={psd}
-                    isFavorited={favoritedIds.has(psd.id)}
-                    isLoggedIn={!!userId}
-                  />
-                ))}
-              </div>
-            )}
+        <div className="min-w-0 flex-1">
+          <div className="mb-6">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              Biblioteca PSD
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Materiais profissionais prontos para editar.
+            </p>
           </div>
+
+          <div className="mb-6">
+            <LibraryControls />
+          </div>
+
+          {filtered.length === 0 ? (
+            <EmptyState
+              icon={allPsds.length === 0 ? <ImageOff className="h-6 w-6" /> : <LayoutGrid className="h-6 w-6" />}
+              title={allPsds.length === 0 ? "Nenhum PSD publicado ainda" : "Nenhum resultado encontrado"}
+              description={
+                allPsds.length === 0
+                  ? "Assim que a equipe publicar materiais no admin, eles aparecem aqui."
+                  : "Ajuste a busca, categoria ou ordenação para encontrar o que procura."
+              }
+            />
+          ) : (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-4">
+              {filtered.map((psd) => (
+                <PsdCard
+                  key={psd.id}
+                  psd={psd}
+                  isFavorited={favoritedIds.has(psd.id)}
+                  isLoggedIn={!!userId}
+                />
+              ))}
+            </div>
+          )}
         </div>
-      </main>
-      <SiteFooter />
-    </div>
+      </div>
+    </PublicShell>
   );
 }
