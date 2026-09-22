@@ -33,16 +33,33 @@ const config: Config = {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
-          50: "#eef1ff",
-          100: "#e0e4ff",
-          200: "#c5caff",
-          300: "#a2a4ff",
-          400: "#8478fb",
-          500: "#6c56f3",
-          600: "#5b3fe0",
-          700: "#4b31bd",
-          800: "#3d2a97",
-          900: "#342778",
+          // Escala pensada para fundo ESCURO: números baixos = tons
+          // escuros/sutis (fundos de badge, item ativo do menu); números
+          // altos = tons claros/vibrantes (texto sobre fundo escuro).
+          50: "#1b1533",
+          100: "#241c42",
+          200: "#332755",
+          300: "#4a3878",
+          400: "#6851a8",
+          500: "#8267d6",
+          600: "#9575f5",
+          700: "#b29dfa",
+          800: "#d2c4ff",
+          900: "#ede7ff",
+        },
+        cyan: {
+          DEFAULT: "hsl(var(--cyan))",
+          foreground: "hsl(var(--cyan-foreground))",
+          50: "#0b2530",
+          100: "#0e3340",
+          200: "#134a5c",
+          300: "#166b83",
+          400: "#1c93b3",
+          500: "#22b8dd",
+          600: "#3fd0f2",
+          700: "#7bdff5",
+          800: "#b0ecf9",
+          900: "#dbf8fd",
         },
         success: {
           DEFAULT: "hsl(var(--success))",
@@ -65,12 +82,12 @@ const config: Config = {
         sm: "calc(var(--radius) - 4px)",
       },
       boxShadow: {
-        subtle: "0 1px 2px 0 rgb(15 15 25 / 0.04)",
-        card: "0 1px 3px 0 rgb(15 15 25 / 0.06), 0 1px 2px -1px rgb(15 15 25 / 0.04)",
+        subtle: "0 1px 2px 0 rgb(0 0 0 / 0.25)",
+        card: "0 1px 3px 0 rgb(0 0 0 / 0.35), 0 1px 2px -1px rgb(0 0 0 / 0.3)",
         elevated:
-          "0 4px 16px -4px rgb(15 15 25 / 0.08), 0 2px 6px -2px rgb(15 15 25 / 0.05)",
+          "0 4px 20px -4px rgb(0 0 0 / 0.45), 0 2px 8px -2px rgb(0 0 0 / 0.35)",
         floating:
-          "0 20px 40px -12px rgb(15 15 25 / 0.16), 0 4px 12px -4px rgb(15 15 25 / 0.08)",
+          "0 24px 48px -12px rgb(0 0 0 / 0.55), 0 6px 16px -4px rgb(0 0 0 / 0.4)",
       },
       keyframes: {
         "fade-in": {

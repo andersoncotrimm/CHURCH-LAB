@@ -67,13 +67,13 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen">
-      <aside className="relative hidden w-[42%] flex-col justify-between overflow-hidden bg-foreground px-12 py-10 text-background lg:flex">
+      <aside className="relative hidden w-[42%] flex-col justify-between overflow-hidden border-r border-border bg-surface px-12 py-10 text-foreground lg:flex">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_theme(colors.accent.700)_0%,_transparent_55%)] opacity-50"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,_theme(colors.accent.600)_0%,_transparent_55%)] opacity-60"
         />
         <Link href="/" className="relative z-10">
-          <Logo inverted />
+          <Logo />
         </Link>
 
         <div className="relative z-10 max-w-sm">
@@ -82,15 +82,15 @@ export default function LoginPage() {
             só lugar.”
           </p>
           <div className="mt-6 flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-background/15" />
+            <div className="h-10 w-10 rounded-full bg-accent-100" />
             <div>
               <p className="text-sm font-medium">Camila Souza</p>
-              <p className="text-xs text-background/60">Coordenadora de Comunicação</p>
+              <p className="text-xs text-muted-foreground">Coordenadora de Comunicação</p>
             </div>
           </div>
         </div>
 
-        <p className="relative z-10 text-xs text-background/50">
+        <p className="relative z-10 text-xs text-muted-foreground">
           © {new Date().getFullYear()} CHURCH-LAB. Todos os direitos reservados.
         </p>
       </aside>

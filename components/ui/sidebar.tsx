@@ -105,7 +105,7 @@ function Sidebar({ items, brand, footer, mobileOpen, onMobileClose }: SidebarPro
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="absolute inset-0 animate-fade-in bg-foreground/40 backdrop-blur-sm"
+            className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-sm"
             onClick={onMobileClose}
           />
           <div className="relative z-10 h-full animate-scale-in">{content}</div>

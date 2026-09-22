@@ -4,30 +4,35 @@
 
 @layer base {
   :root {
-    --background: 240 20% 98.5%;
-    --surface: 0 0% 100%;
-    --foreground: 240 10% 8%;
+    /* CHURCH-LAB — design system premium dark (plataforma de assinatura de PSDs) */
+    --background: 252 42% 6%;
+    --surface: 252 32% 10%;
+    --foreground: 250 25% 96%;
 
-    --muted: 240 12% 95%;
-    --muted-foreground: 240 5% 40%;
+    --muted: 252 22% 15%;
+    --muted-foreground: 252 12% 68%;
 
-    --border: 240 10% 89%;
-    --input: 240 10% 87%;
-    --ring: 250 72% 56%;
+    --border: 252 22% 20%;
+    --input: 252 22% 22%;
+    --ring: 258 90% 68%;
 
-    --accent: 250 72% 56%;
+    --accent: 258 88% 66%;
     --accent-foreground: 0 0% 100%;
 
-    --success: 152 55% 32%;
+    /* Segunda cor do gradiente (roxo -> ciano), usada em botões, glow e tags. */
+    --cyan: 189 94% 60%;
+    --cyan-foreground: 252 42% 6%;
+
+    --success: 152 55% 48%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 38 92% 42%;
-    --warning-foreground: 0 0% 100%;
+    --warning: 38 92% 58%;
+    --warning-foreground: 252 42% 6%;
 
-    --danger: 0 68% 48%;
+    --danger: 0 78% 64%;
     --danger-foreground: 0 0% 100%;
 
-    --radius: 0.75rem;
+    --radius: 0.9rem;
   }
 }
 
@@ -44,10 +49,15 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    background-image:
+      radial-gradient(720px circle at 15% -10%, hsl(var(--accent) / 0.28), transparent 60%),
+      radial-gradient(640px circle at 100% 0%, hsl(var(--cyan) / 0.16), transparent 55%);
+    background-attachment: fixed;
+    background-repeat: no-repeat;
   }
 
   ::selection {
-    @apply bg-accent-200 text-accent-900;
+    @apply bg-accent-600 text-white;
   }
 
   :focus-visible {
@@ -67,5 +77,25 @@
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Gradiente de marca (roxo -> ciano), usado em CTAs e destaques. */
+  .gradient-accent {
+    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--cyan)) 100%);
+  }
+
+  .text-gradient-accent {
+    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--cyan)) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .glow-accent {
+    box-shadow: 0 0 1px hsl(var(--accent) / 0.4), 0 12px 40px -8px hsl(var(--accent) / 0.45);
+  }
+
+  .glow-accent-sm {
+    box-shadow: 0 0 24px -8px hsl(var(--accent) / 0.5);
   }
 }

@@ -43,7 +43,7 @@ function Modal({ open, onClose, title, description, children, footer, className 
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
     >
       <div
-        className="absolute inset-0 animate-fade-in bg-foreground/40 backdrop-blur-sm"
+        className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
       <div
