@@ -31,7 +31,7 @@ function Hero() {
 
         <div className="mt-9 flex flex-col gap-3 sm:flex-row">
           <Link
-            href="/login"
+            href="/cadastro"
             className={cn(buttonVariants({ variant: "accent", size: "lg" }), "group")}
           >
             Começar agora

@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Category, PsdFile } from "@/lib/types/psd";
 
-interface PsdFileRow {
+export interface PsdFileRow {
   id: string;
   title: string;
   slug: string;
@@ -20,7 +20,7 @@ interface PsdFileRow {
   psd_categories: { categories: Category | null }[] | null;
 }
 
-async function attachDownloadCounts(
+export async function attachDownloadCounts(
   supabase: SupabaseClient,
   psds: Omit<PsdFile, "downloadsCount">[]
 ): Promise<PsdFile[]> {
@@ -42,7 +42,7 @@ async function attachDownloadCounts(
   return psds.map((psd) => ({ ...psd, downloadsCount: counts.get(psd.id) ?? 0 }));
 }
 
-function mapRow(row: PsdFileRow): Omit<PsdFile, "downloadsCount"> {
+export function mapPsdRow(row: PsdFileRow): Omit<PsdFile, "downloadsCount"> {
   const { psd_categories, ...rest } = row;
   return {
     ...rest,
@@ -62,7 +62,7 @@ export async function getPublishedPsds(supabase: SupabaseClient): Promise<PsdFil
 
   if (error || !data) return [];
 
-  return attachDownloadCounts(supabase, (data as unknown as PsdFileRow[]).map(mapRow));
+  return attachDownloadCounts(supabase, (data as unknown as PsdFileRow[]).map(mapPsdRow));
 }
 
 /** Detalhe público de um PSD publicado pelo slug. */
@@ -79,7 +79,7 @@ export async function getPublishedPsdBySlug(
 
   if (error || !data) return null;
 
-  const [withCount] = await attachDownloadCounts(supabase, [mapRow(data as unknown as PsdFileRow)]);
+  const [withCount] = await attachDownloadCounts(supabase, [mapPsdRow(data as unknown as PsdFileRow)]);
   return withCount;
 }
 

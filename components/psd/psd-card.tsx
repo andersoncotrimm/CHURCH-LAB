@@ -13,9 +13,10 @@ export interface PsdCardProps {
   psd: PsdFile;
   isFavorited?: boolean;
   isLoggedIn: boolean;
+  topLeftBadge?: React.ReactNode;
 }
 
-function PsdCard({ psd, isFavorited = false, isLoggedIn }: PsdCardProps) {
+function PsdCard({ psd, isFavorited = false, isLoggedIn, topLeftBadge }: PsdCardProps) {
   const [favorited, setFavorited] = React.useState(isFavorited);
   const [pending, setPending] = React.useState(false);
   const category = psd.categories[0];
@@ -76,11 +77,12 @@ function PsdCard({ psd, isFavorited = false, isLoggedIn }: PsdCardProps) {
           </Link>
         )}
 
-        {psd.is_featured && (
-          <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
-            Destaque
-          </Badge>
-        )}
+        {topLeftBadge ??
+          (psd.is_featured && (
+            <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
+              Destaque
+            </Badge>
+          ))}
       </div>
 
       <div className="flex flex-1 flex-col gap-1.5 p-4">

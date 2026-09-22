@@ -26,7 +26,7 @@ function Cta() {
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link
-                href="/login"
+                href="/cadastro"
                 className={cn(
                   buttonVariants({ variant: "accent", size: "lg" }),
                   "group glow-accent-sm"

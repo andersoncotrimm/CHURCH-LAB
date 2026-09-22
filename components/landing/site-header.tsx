@@ -40,7 +40,7 @@ function SiteHeader() {
           <Link href="/login" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
             Entrar
           </Link>
-          <Link href="/login" className={cn(buttonVariants({ variant: "accent", size: "sm" }))}>
+          <Link href="/cadastro" className={cn(buttonVariants({ variant: "accent", size: "sm" }))}>
             Começar agora
           </Link>
         </div>
@@ -77,7 +77,7 @@ function SiteHeader() {
               Entrar
             </Link>
             <Link
-              href="/login"
+              href="/cadastro"
               onClick={() => setMobileOpen(false)}
               className={cn(buttonVariants({ variant: "accent", size: "md" }), "w-full")}
             >
