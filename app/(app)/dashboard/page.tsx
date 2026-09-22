@@ -1,59 +1,15 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Heart, Sparkles, Zap, ImageOff, LayoutGrid } from "lucide-react";
+import { Heart, Sparkles, LayoutGrid } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PsdCard } from "@/components/psd/psd-card";
+import { PsdFeatureCard } from "@/components/psd/psd-feature-card";
 import { RedownloadButton } from "@/components/psd/redownload-button";
 import { createClient } from "@/utils/supabase/server";
 import { getDashboardData } from "@/lib/dashboard";
-import type { PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
-
-function ContinueCard({ psd }: { psd: PsdFile }) {
-  const category = psd.categories[0];
-
-  return (
-    <div className="flex flex-col gap-6 p-5 sm:flex-row sm:p-6">
-      <div className="relative aspect-[4/5] w-full shrink-0 overflow-hidden rounded-xl bg-muted sm:w-44">
-        {psd.thumbnail_url ? (
-          <Image src={psd.thumbnail_url} alt={psd.title} fill sizes="176px" className="object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground/40">
-            <ImageOff className="h-8 w-8" />
-          </div>
-        )}
-      </div>
-
-      <div className="flex flex-1 flex-col justify-between gap-4">
-        <div>
-          {category && (
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-cyan-600">
-              {category.name}
-            </span>
-          )}
-          <h3 className="mt-1 text-xl font-semibold tracking-tight text-foreground">{psd.title}</h3>
-          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <Zap className="h-3.5 w-3.5 text-accent" />
-              {psd.credit_cost} créditos
-            </span>
-            <span>{psd.downloadsCount} downloads</span>
-          </p>
-        </div>
-
-        <div className="flex flex-wrap gap-3">
-          <RedownloadButton psdId={psd.id} variant="accent" label="Baixar novamente" />
-          <Link href={`/psd/${psd.slug}`}>
-            <Button variant="outline">Mais informações</Button>
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -85,7 +41,17 @@ export default async function DashboardPage() {
             <h2 className="text-sm font-semibold text-foreground">Continuar de onde parou</h2>
           </div>
           {continueItem ? (
-            <ContinueCard psd={continueItem} />
+            <PsdFeatureCard
+              psd={continueItem}
+              actions={
+                <>
+                  <RedownloadButton psdId={continueItem.id} variant="accent" label="Baixar novamente" />
+                  <Link href={`/psd/${continueItem.slug}`}>
+                    <Button variant="outline">Mais informações</Button>
+                  </Link>
+                </>
+              }
+            />
           ) : (
             <div className="p-5 sm:p-6">
               <EmptyState

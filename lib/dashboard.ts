@@ -1,10 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { attachDownloadCounts, mapPsdRow, type PsdFileRow } from "@/lib/psd";
-import type { Category, PsdFile } from "@/lib/types/psd";
-
-export interface PopularCategory extends Category {
-  psdCount: number;
-}
+import { attachDownloadCounts, getPopularCategories, mapPsdRow, type PopularCategory, type PsdFileRow } from "@/lib/psd";
+import type { PsdFile } from "@/lib/types/psd";
 
 export interface DashboardData {
   continueItem: PsdFile | null;
@@ -68,22 +64,7 @@ export async function getDashboardData(supabase: SupabaseClient, userId: string)
     break;
   }
 
-  const { data: categories } = await supabase.from("categories").select("*").order("name", { ascending: true });
-  const { data: categoryLinks } = await supabase
-    .from("psd_categories")
-    .select("category_id, psd_files!inner(is_published)")
-    .eq("psd_files.is_published", true);
-
-  const counts = new Map<string, number>();
-  for (const link of categoryLinks ?? []) {
-    counts.set(link.category_id, (counts.get(link.category_id) ?? 0) + 1);
-  }
-
-  const popularCategories = (categories ?? [])
-    .map((category) => ({ ...category, psdCount: counts.get(category.id) ?? 0 }))
-    .filter((category) => category.psdCount > 0)
-    .sort((a, b) => b.psdCount - a.psdCount)
-    .slice(0, 8);
+  const popularCategories = await getPopularCategories(supabase);
 
   return { continueItem, favoriteItem, newItem, popularCategories };
 }
