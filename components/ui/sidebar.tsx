@@ -12,6 +12,8 @@ export interface SidebarItem {
   icon: React.ReactNode;
   badge?: string | number;
   disabled?: boolean;
+  /** Renderiza um rótulo de seção (ex.: "CONTA") logo antes deste item. */
+  sectionLabel?: string;
 }
 
 export interface SidebarProps {
@@ -42,54 +44,67 @@ function Sidebar({ items, brand, footer, mobileOpen, onMobileClose }: SidebarPro
         {items.map((item) => {
           const isActive = pathname === item.href;
 
+          const sectionHeading = item.sectionLabel && (
+            <p
+              key={`section-${item.sectionLabel}`}
+              className="mb-1.5 mt-5 px-3 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60 first:mt-1"
+            >
+              {item.sectionLabel}
+            </p>
+          );
+
           if (item.disabled) {
             return (
-              <span
-                key={item.label}
-                aria-disabled="true"
-                title="Em breve"
-                className="flex cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground/50"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="flex h-5 w-5 items-center justify-center">{item.icon}</span>
-                  {item.label}
+              <React.Fragment key={item.label}>
+                {sectionHeading}
+                <span
+                  aria-disabled="true"
+                  title="Em breve"
+                  className="flex cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground/50"
+                >
+                  <span className="flex items-center gap-3">
+                    <span className="flex h-5 w-5 items-center justify-center">{item.icon}</span>
+                    {item.label}
+                  </span>
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+                    Em breve
+                  </span>
                 </span>
-                <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">
-                  Em breve
-                </span>
-              </span>
+              </React.Fragment>
             );
           }
 
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={onMobileClose}
-              className={cn(
-                "group flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-accent-50 text-accent-700"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <span className="flex items-center gap-3">
-                <span
-                  className={cn(
-                    "flex h-5 w-5 items-center justify-center",
-                    isActive ? "text-accent-600" : "text-muted-foreground group-hover:text-foreground"
-                  )}
-                >
-                  {item.icon}
+            <React.Fragment key={item.href}>
+              {sectionHeading}
+              <Link
+                href={item.href}
+                onClick={onMobileClose}
+                className={cn(
+                  "group flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-accent-50 text-accent-700"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span className="flex items-center gap-3">
+                  <span
+                    className={cn(
+                      "flex h-5 w-5 items-center justify-center",
+                      isActive ? "text-accent-600" : "text-muted-foreground group-hover:text-foreground"
+                    )}
+                  >
+                    {item.icon}
+                  </span>
+                  {item.label}
                 </span>
-                {item.label}
-              </span>
-              {item.badge && (
-                <span className="rounded-full bg-accent-100 px-2 py-0.5 text-xs font-semibold text-accent-700">
-                  {item.badge}
-                </span>
-              )}
-            </Link>
+                {item.badge && (
+                  <span className="rounded-full bg-accent-100 px-2 py-0.5 text-xs font-semibold text-accent-700">
+                    {item.badge}
+                  </span>
+                )}
+              </Link>
+            </React.Fragment>
           );
         })}
       </nav>

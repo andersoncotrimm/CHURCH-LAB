@@ -1,12 +1,15 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export interface DropdownItem {
   label: string;
   icon?: React.ReactNode;
   onSelect?: () => void;
+  /** Se definido, o item vira um link de navegação em vez de um botão. */
+  href?: string;
   destructive?: boolean;
 }
 
@@ -58,23 +61,45 @@ function Dropdown({ trigger, items, align = "right", className }: DropdownProps)
             className
           )}
         >
-          {items.map((item) => (
-            <button
-              key={item.label}
-              role="menuitem"
-              onClick={() => {
-                item.onSelect?.();
-                setOpen(false);
-              }}
-              className={cn(
-                "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted",
-                item.destructive ? "text-danger" : "text-foreground"
-              )}
-            >
-              {item.icon}
-              {item.label}
-            </button>
-          ))}
+          {items.map((item) => {
+            const itemClassName = cn(
+              "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted",
+              item.destructive ? "text-danger" : "text-foreground"
+            );
+
+            if (item.href) {
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  role="menuitem"
+                  onClick={() => {
+                    item.onSelect?.();
+                    setOpen(false);
+                  }}
+                  className={itemClassName}
+                >
+                  {item.icon}
+                  {item.label}
+                </Link>
+              );
+            }
+
+            return (
+              <button
+                key={item.label}
+                role="menuitem"
+                onClick={() => {
+                  item.onSelect?.();
+                  setOpen(false);
+                }}
+                className={itemClassName}
+              >
+                {item.icon}
+                {item.label}
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
