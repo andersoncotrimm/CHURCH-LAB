@@ -35,6 +35,11 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
     const password = String(formData.get("password") ?? "");
     const fullName = String(formData.get("name") ?? "");
 
+    if (mode === "signup" && formData.get("terms") !== "on") {
+      setErrorMessage("Você precisa concordar com os termos de uso e a política de privacidade para criar sua conta.");
+      return;
+    }
+
     const supabase = createClient();
     setLoading(true);
 
@@ -204,7 +209,7 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
                   />
                   Lembrar acesso
                 </label>
-                <Link href="#" className="text-sm font-medium text-accent hover:underline">
+                <Link href="/recuperar-senha" className="text-sm font-medium text-accent hover:underline">
                   Esqueci minha senha
                 </Link>
               </div>
@@ -212,7 +217,8 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
               <label className="flex items-start gap-2 pt-1 text-sm text-muted-foreground">
                 <input
                   type="checkbox"
-                  required
+                  name="terms"
+                  disabled={loading}
                   className="mt-0.5 h-4 w-4 rounded border-input text-accent focus-visible:ring-2 focus-visible:ring-accent"
                 />
                 Concordo com os termos de uso e a política de privacidade.
