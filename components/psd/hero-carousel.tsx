@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAutoCarousel } from "@/lib/hooks/use-auto-carousel";
-import { getYoutubeEmbedUrl } from "@/lib/youtube";
+import { getYoutubeVideoId } from "@/lib/youtube";
+import { YoutubeBackgroundPlayer } from "@/components/psd/youtube-background-player";
 import type { PsdFile } from "@/lib/types/psd";
 
 export interface HeroCarouselProps {
@@ -34,20 +35,13 @@ export function HeroCarousel({ items, variant }: HeroCarouselProps) {
 
   const psd = items[index];
   const category = psd.categories[0];
-  const embedUrl = psd.youtube_url ? getYoutubeEmbedUrl(psd.youtube_url) : null;
+  const videoId = psd.youtube_url ? getYoutubeVideoId(psd.youtube_url) : null;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-border bg-surface shadow-elevated">
       <div className="relative aspect-[4/5] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
-        {embedUrl ? (
-          <iframe
-            key={psd.id}
-            src={embedUrl}
-            title={psd.title}
-            className="absolute inset-0 h-full w-full"
-            allow="autoplay; encrypted-media; picture-in-picture"
-            allowFullScreen
-          />
+        {videoId ? (
+          <YoutubeBackgroundPlayer key={psd.id} videoId={videoId} />
         ) : psd.preview_url || psd.thumbnail_url ? (
           <Image
             key={psd.id}
@@ -64,7 +58,7 @@ export function HeroCarousel({ items, variant }: HeroCarouselProps) {
           </div>
         )}
 
-        {!embedUrl && (
+        {!videoId && (
           <>
             <div
               aria-hidden="true"
@@ -78,7 +72,7 @@ export function HeroCarousel({ items, variant }: HeroCarouselProps) {
         )}
       </div>
 
-      {!embedUrl && (
+      {!videoId && (
         <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-6 sm:max-w-lg sm:p-10">
           {category && (
             <Badge variant="accent" className="w-fit">
