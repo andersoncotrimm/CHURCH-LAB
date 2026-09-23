@@ -44,6 +44,21 @@ export async function attachDownloadCounts(
   return psds.map((psd) => ({ ...psd, downloadsCount: counts.get(psd.id) ?? 0 }));
 }
 
+/** Conta favoritos por PSD, para ordenar a fileira "Mais favoritados". */
+export async function getFavoritesCounts(
+  supabase: SupabaseClient,
+  psdIds: string[]
+): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (psdIds.length === 0) return counts;
+
+  const { data } = await supabase.from("favorites").select("psd_id").in("psd_id", psdIds);
+  for (const row of data ?? []) {
+    counts.set(row.psd_id, (counts.get(row.psd_id) ?? 0) + 1);
+  }
+  return counts;
+}
+
 export function mapPsdRow(row: PsdFileRow): Omit<PsdFile, "downloadsCount"> {
   const { psd_categories, ...rest } = row;
   return {

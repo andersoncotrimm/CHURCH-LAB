@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PsdCard } from "@/components/psd/psd-card";
 import { PsdFeatureCard } from "@/components/psd/psd-feature-card";
+import { PsdRow } from "@/components/psd/psd-row";
 import { RedownloadButton } from "@/components/psd/redownload-button";
 import { createClient } from "@/utils/supabase/server";
 import { getDashboardData } from "@/lib/dashboard";
 import { getUserCreditsSummary } from "@/lib/credits";
+import { getPublishedPsds, getFavoritesCounts } from "@/lib/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -23,11 +25,28 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
 
-  const [{ continueItem, favoriteItem, newItem, popularCategories }, credits] = await Promise.all([
-    getDashboardData(supabase, user.id),
-    getUserCreditsSummary(supabase, user.id),
-  ]);
+  const [{ continueItem, favoriteItem, newItem, popularCategories }, credits, allPsds, { data: favoriteRows }] =
+    await Promise.all([
+      getDashboardData(supabase, user.id),
+      getUserCreditsSummary(supabase, user.id),
+      getPublishedPsds(supabase),
+      supabase.from("favorites").select("psd_id").eq("user_id", user.id),
+    ]);
   const availableCredits = credits?.available ?? null;
+  const favoritedIds = new Set((favoriteRows ?? []).map((f) => f.psd_id));
+
+  const excludeIds = new Set([continueItem?.id, favoriteItem?.id, newItem?.id].filter(Boolean) as string[]);
+  const rest = allPsds.filter((p) => !excludeIds.has(p.id));
+  const favoritesCounts = await getFavoritesCounts(supabase, rest.map((p) => p.id));
+
+  const mostDownloaded = [...rest].sort((a, b) => b.downloadsCount - a.downloadsCount).slice(0, 12);
+  const newest = [...rest]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 12);
+  const mostFavorited = rest
+    .filter((p) => (favoritesCounts.get(p.id) ?? 0) > 0)
+    .sort((a, b) => (favoritesCounts.get(b.id) ?? 0) - (favoritesCounts.get(a.id) ?? 0))
+    .slice(0, 12);
 
   const firstName = (profile?.full_name || user.email || "").split(" ")[0];
 
@@ -115,6 +134,31 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      <PsdRow
+        title="Mais baixados"
+        psds={mostDownloaded}
+        isLoggedIn
+        favoritedIds={favoritedIds}
+        availableCredits={availableCredits}
+        viewAllHref="/psd?ordenar=baixados"
+      />
+      <PsdRow
+        title="Novidades"
+        psds={newest}
+        isLoggedIn
+        favoritedIds={favoritedIds}
+        availableCredits={availableCredits}
+        viewAllHref="/psd"
+      />
+      <PsdRow
+        title="Mais favoritados"
+        psds={mostFavorited}
+        isLoggedIn
+        favoritedIds={favoritedIds}
+        availableCredits={availableCredits}
+        viewAllHref="/psd"
+      />
 
       {popularCategories.length > 0 && (
         <div>

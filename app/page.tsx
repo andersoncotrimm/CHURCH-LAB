@@ -1,14 +1,19 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Layers, Sparkles } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
-import { PsdFeatureCard } from "@/components/psd/psd-feature-card";
-import { PsdCard } from "@/components/psd/psd-card";
-import { Badge } from "@/components/ui/badge";
+import { HeroBanner } from "@/components/psd/hero-banner";
+import { PsdRow } from "@/components/psd/psd-row";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { Layers } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
-import { getPublishedPsds, getPopularCategories, getCategories, type PopularCategory } from "@/lib/psd";
+import {
+  getPublishedPsds,
+  getPopularCategories,
+  getCategories,
+  getFavoritesCounts,
+  type PopularCategory,
+} from "@/lib/psd";
 import type { Category, PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +26,7 @@ export default async function LandingPage() {
   let allPsds: PsdFile[] = [];
   let popularCategories: PopularCategory[] = [];
   let categories: Category[] = [];
+  let favoritesCounts = new Map<string, number>();
 
   try {
     const supabase = await createClient();
@@ -36,6 +42,7 @@ export default async function LandingPage() {
         getPopularCategories(supabase),
         getCategories(supabase),
       ]);
+      favoritesCounts = await getFavoritesCounts(supabase, allPsds.map((p) => p.id));
     }
   } catch (error) {
     console.error("Falha ao carregar a home pública:", error);
@@ -43,85 +50,48 @@ export default async function LandingPage() {
 
   if (userId) redirect("/dashboard");
 
-  const excludeIds = new Set<string>();
+  const heroItem = [...allPsds].sort((a, b) => b.downloadsCount - a.downloadsCount)[0] ?? null;
+  const rest = allPsds.filter((p) => p.id !== heroItem?.id);
 
-  const featuredItem = [...allPsds].sort((a, b) => b.downloadsCount - a.downloadsCount)[0] ?? null;
-  if (featuredItem) excludeIds.add(featuredItem.id);
-
-  const highlightItem = allPsds.find((p) => p.is_featured && !excludeIds.has(p.id)) ?? null;
-  if (highlightItem) excludeIds.add(highlightItem.id);
-
-  const newItem = allPsds.find((p) => !excludeIds.has(p.id)) ?? null;
+  const mostDownloaded = [...rest].sort((a, b) => b.downloadsCount - a.downloadsCount).slice(0, 12);
+  const newest = [...rest]
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+    .slice(0, 12);
+  const mostFavorited = rest
+    .filter((p) => (favoritesCounts.get(p.id) ?? 0) > 0)
+    .sort((a, b) => (favoritesCounts.get(b.id) ?? 0) - (favoritesCounts.get(a.id) ?? 0))
+    .slice(0, 12);
 
   return (
     <PublicShell categories={categories}>
-      <div className="mx-auto flex max-w-6xl flex-col gap-8">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Biblioteca de PSDs para a sua igreja
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Kits, stories, carrosséis e muito mais, prontos para editar. Crie sua conta para baixar.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card lg:col-span-2">
-            <div className="flex items-center gap-2 border-b border-border px-5 pt-5 sm:px-6 sm:pt-6">
-              <h2 className="text-sm font-semibold text-foreground">Mais baixado</h2>
-            </div>
-            {featuredItem ? (
-              <PsdFeatureCard
-                psd={featuredItem}
-                actions={
-                  <>
-                    <Link href="/login">
-                      <Button variant="accent">Entrar para baixar</Button>
-                    </Link>
-                    <Link href={`/psd/${featuredItem.slug}`}>
-                      <Button variant="outline">Mais informações</Button>
-                    </Link>
-                  </>
-                }
-              />
-            ) : (
-              <div className="p-5 sm:p-6">
-                <EmptyState
-                  icon={<Layers className="h-6 w-6" />}
-                  title="Biblioteca em construção"
-                  description="Novos materiais chegam em breve."
-                />
-              </div>
-            )}
+      <div className="mx-auto flex max-w-6xl flex-col gap-10">
+        {heroItem ? (
+          <HeroBanner
+            psd={heroItem}
+            actions={
+              <>
+                <Link href="/login">
+                  <Button variant="accent">Entrar para baixar</Button>
+                </Link>
+                <Link href={`/psd/${heroItem.slug}`}>
+                  <Button variant="outline">Mais informações</Button>
+                </Link>
+              </>
+            }
+          />
+        ) : (
+          <div className="rounded-2xl border border-border bg-surface p-6 sm:p-10">
+            <EmptyState
+              icon={<Layers className="h-6 w-6" />}
+              title="Biblioteca em construção"
+              description="Novos materiais chegam em breve."
+            />
           </div>
+        )}
 
-          <div className="flex flex-col gap-6">
-            {highlightItem && (
-              <PsdCard
-                psd={highlightItem}
-                isLoggedIn={false}
-                topLeftBadge={
-                  <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
-                    Destaque
-                  </Badge>
-                }
-              />
-            )}
-
-            {newItem && (
-              <PsdCard
-                psd={newItem}
-                isLoggedIn={false}
-                topLeftBadge={
-                  <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
-                    <Sparkles className="h-3 w-3" />
-                    Novidade
-                  </Badge>
-                }
-              />
-            )}
-          </div>
-        </div>
+        <PsdRow title="Mais baixados" psds={mostDownloaded} isLoggedIn={false} viewAllHref="/psd?ordenar=baixados" />
+        <PsdRow title="Novidades" psds={newest} isLoggedIn={false} viewAllHref="/psd" />
+        <PsdRow title="Mais favoritados" psds={mostFavorited} isLoggedIn={false} viewAllHref="/psd" />
 
         {popularCategories.length > 0 && (
           <div>
