@@ -7,12 +7,25 @@ import * as React from "react";
 declare global {
   interface Window {
     YT?: {
-      Player: new (elementId: string, options: Record<string, unknown>) => {
+      Player: new (
+        elementId: string,
+        options: Record<string, unknown>
+      ) => {
         destroy: () => void;
+        getIframe: () => HTMLIFrameElement;
       };
     };
     onYouTubeIframeAPIReady?: () => void;
   }
+}
+
+/** O player da API substitui a div pelo iframe com width/height fixos por padrão — força ele a preencher o container via CSS, sem cortar o vídeo. */
+function fillContainer(iframe: HTMLIFrameElement) {
+  iframe.style.position = "absolute";
+  iframe.style.inset = "0";
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.border = "0";
 }
 
 let apiLoadPromise: Promise<void> | null = null;
@@ -49,13 +62,15 @@ export function YoutubeBackgroundPlayer({ videoId }: { videoId: string }) {
 
   React.useEffect(() => {
     let cancelled = false;
-    let player: { destroy: () => void } | null = null;
+    let player: { destroy: () => void; getIframe: () => HTMLIFrameElement } | null = null;
 
     loadYoutubeIframeApi().then(() => {
       if (cancelled || !window.YT) return;
 
       player = new window.YT.Player(containerId, {
         videoId,
+        width: "100%",
+        height: "100%",
         playerVars: {
           autoplay: 1,
           mute: 1,
@@ -71,13 +86,22 @@ export function YoutubeBackgroundPlayer({ videoId }: { videoId: string }) {
           origin: window.location.origin,
         },
         events: {
-          onReady: (event: { target: { getDuration: () => number; seekTo: (s: number, allow: boolean) => void; playVideo: () => void } }) => {
+          onReady: (event: {
+            target: {
+              getDuration: () => number;
+              seekTo: (s: number, allow: boolean) => void;
+              playVideo: () => void;
+              getIframe: () => HTMLIFrameElement;
+            };
+          }) => {
+            fillContainer(event.target.getIframe());
             const duration = event.target.getDuration();
             if (duration > 0) event.target.seekTo(duration * 0.05, true);
             event.target.playVideo();
           },
         },
       });
+      fillContainer(player.getIframe());
     });
 
     return () => {
@@ -88,14 +112,11 @@ export function YoutubeBackgroundPlayer({ videoId }: { videoId: string }) {
   }, [videoId, containerId]);
 
   return (
-    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-black">
-      {/* Levemente maior que o container: sobra pra fora é cortada pelo
-          overflow-hidden, escondendo qualquer resquício de borda/moldura
-          do player. */}
-      <div
-        id={containerId}
-        className="absolute left-1/2 top-1/2 h-[130%] w-[130%] -translate-x-1/2 -translate-y-1/2"
-      />
+    // Sem crop: o player preenche exatamente o container, então o
+    // YouTube encaixa o vídeo inteiro sozinho (tarja preta nas bordas se
+    // a proporção não bater), em vez de cortar as laterais/topo do vídeo.
+    <div className="pointer-events-none absolute inset-0 bg-black">
+      <div id={containerId} className="absolute inset-0 h-full w-full" />
     </div>
   );
 }

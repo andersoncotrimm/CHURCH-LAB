@@ -14,6 +14,7 @@ import {
   getFavoritesCounts,
   type PopularCategory,
 } from "@/lib/psd";
+import { getSiteSettings } from "@/lib/settings";
 import type { Category, PsdFile } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,7 @@ export default async function LandingPage() {
   let popularCategories: PopularCategory[] = [];
   let categories: Category[] = [];
   let favoritesCounts = new Map<string, number>();
+  let carouselIntervalSeconds = 7;
 
   try {
     const supabase = await createClient();
@@ -38,12 +40,18 @@ export default async function LandingPage() {
     userId = user?.id ?? null;
 
     if (!userId) {
-      [allPsds, featuredPsds, popularCategories, categories] = await Promise.all([
+      const [publishedPsds, featured, popular, cats, settings] = await Promise.all([
         getPublishedPsds(supabase),
         getFeaturedPsds(supabase),
         getPopularCategories(supabase),
         getCategories(supabase),
+        getSiteSettings(supabase),
       ]);
+      allPsds = publishedPsds;
+      featuredPsds = featured;
+      popularCategories = popular;
+      categories = cats;
+      carouselIntervalSeconds = settings.carouselIntervalSeconds;
       favoritesCounts = await getFavoritesCounts(supabase, allPsds.map((p) => p.id));
     }
   } catch (error) {
@@ -75,7 +83,7 @@ export default async function LandingPage() {
     <PublicShell categories={categories}>
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         {heroItems.length > 0 ? (
-          <HeroCarousel items={heroItems} variant="guest" />
+          <HeroCarousel items={heroItems} variant="guest" intervalSeconds={carouselIntervalSeconds} />
         ) : (
           <div className="rounded-2xl border border-border bg-surface p-6 sm:p-10">
             <EmptyState

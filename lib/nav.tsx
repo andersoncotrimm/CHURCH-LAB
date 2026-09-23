@@ -5,6 +5,7 @@ import {
   Plug,
   Wrench,
   Grid3x3,
+  Images,
   Tag,
   Coins,
   UserCircle,
@@ -21,6 +22,7 @@ export const APP_NAV_ITEMS: SidebarItem[] = [
   { label: "Plugins", href: "/plugins", icon: <Plug className="h-[18px] w-[18px]" /> },
   { label: "Ferramentas", href: "/ferramentas", icon: <Wrench className="h-[18px] w-[18px]" /> },
   { label: "Sistemas", href: "/sistemas", icon: <Grid3x3 className="h-[18px] w-[18px]" /> },
+  { label: "Referências", href: "/referencias", icon: <Images className="h-[18px] w-[18px]" /> },
   { label: "Planos", href: "/planos", icon: <Tag className="h-[18px] w-[18px]" />, sectionLabel: "Conta" },
   { label: "Meus Créditos", href: "/meus-creditos", icon: <Coins className="h-[18px] w-[18px]" /> },
   { label: "Minha Conta", href: "/minha-conta", icon: <UserCircle className="h-[18px] w-[18px]" /> },
@@ -36,6 +38,7 @@ export const PUBLIC_NAV_ITEMS: SidebarItem[] = [
   { label: "Plugins", href: "/plugins", icon: <Plug className="h-[18px] w-[18px]" /> },
   { label: "Ferramentas", href: "/ferramentas", icon: <Wrench className="h-[18px] w-[18px]" /> },
   { label: "Sistemas", href: "/sistemas", icon: <Grid3x3 className="h-[18px] w-[18px]" /> },
+  { label: "Referências", href: "/referencias", icon: <Images className="h-[18px] w-[18px]" /> },
   { label: "Planos", href: "/planos", icon: <Tag className="h-[18px] w-[18px]" />, sectionLabel: "Conta" },
 ];
 

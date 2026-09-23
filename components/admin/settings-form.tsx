@@ -50,6 +50,8 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [siteName, setSiteName] = React.useState(settings.siteName);
   const [backgroundColor, setBackgroundColor] = React.useState(settings.backgroundColor);
   const [buttonColor, setButtonColor] = React.useState(settings.buttonColor);
+  const [carouselInterval, setCarouselInterval] = React.useState(settings.carouselIntervalSeconds);
+  const [referencePinterestUrl, setReferencePinterestUrl] = React.useState(settings.referencePinterestUrl ?? "");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
@@ -111,6 +113,29 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
           hint="Cor de destaque: botões, links ativos e realces."
         />
       </div>
+
+      <Input
+        label="Tempo de cada slide do carrossel de destaques (segundos)"
+        name="carousel_interval_seconds"
+        type="number"
+        min={2}
+        max={60}
+        value={carouselInterval}
+        onChange={(event) => setCarouselInterval(Number(event.target.value))}
+        disabled={loading}
+        hint="Quanto tempo cada destaque (imagem ou vídeo) fica visível antes de avançar sozinho, na home e no dashboard."
+      />
+
+      <Input
+        label="Link da pasta de referências no Pinterest (opcional)"
+        name="reference_pinterest_url"
+        type="url"
+        value={referencePinterestUrl}
+        onChange={(event) => setReferencePinterestUrl(event.target.value)}
+        placeholder="https://www.pinterest.com/usuario/pasta/"
+        disabled={loading}
+        hint="As imagens dessa pasta aparecem em /referencias, visível pra todo mundo no menu."
+      />
 
       <div>
         <Button type="submit" variant="accent" loading={loading}>

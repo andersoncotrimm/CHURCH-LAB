@@ -11,6 +11,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getDashboardData } from "@/lib/dashboard";
 import { getUserCreditsSummary } from "@/lib/credits";
 import { getPublishedPsds, getFeaturedPsds, getUserFavoritePsds, getFavoritesCounts } from "@/lib/psd";
+import { getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -25,13 +26,15 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
 
-  const [{ continueItem, popularCategories }, credits, allPsds, featuredPsds, favoritePsds] = await Promise.all([
-    getDashboardData(supabase, user.id),
-    getUserCreditsSummary(supabase, user.id),
-    getPublishedPsds(supabase),
-    getFeaturedPsds(supabase),
-    getUserFavoritePsds(supabase, user.id),
-  ]);
+  const [{ continueItem, popularCategories }, credits, allPsds, featuredPsds, favoritePsds, settings] =
+    await Promise.all([
+      getDashboardData(supabase, user.id),
+      getUserCreditsSummary(supabase, user.id),
+      getPublishedPsds(supabase),
+      getFeaturedPsds(supabase),
+      getUserFavoritePsds(supabase, user.id),
+      getSiteSettings(supabase),
+    ]);
   const availableCredits = credits?.available ?? null;
   const favoritedIds = new Set(favoritePsds.map((p) => p.id));
 
@@ -65,7 +68,9 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted-foreground">Continue de onde parou ou explore novos materiais.</p>
       </div>
 
-      {heroItems.length > 0 && <HeroCarousel items={heroItems} variant="member" />}
+      {heroItems.length > 0 && (
+        <HeroCarousel items={heroItems} variant="member" intervalSeconds={settings.carouselIntervalSeconds} />
+      )}
 
       {favoritePsds.length > 0 && (
         <section className="flex flex-col gap-3">

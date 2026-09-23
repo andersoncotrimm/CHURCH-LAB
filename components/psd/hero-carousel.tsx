@@ -20,16 +20,18 @@ export interface HeroCarouselProps {
    * Server -> Client Component no Next.js.
    */
   variant: "guest" | "member";
+  /** Segundos que cada slide fica visível antes de avançar sozinho — controlado em /admin/configuracoes. */
+  intervalSeconds?: number;
 }
 
 /**
- * Banner de destaque em carrossel — avança sozinho a cada 7s, com setas
- * e indicadores para navegar manualmente. Alimentado pelos itens
- * marcados "Destaque da semana" no admin; um slide com link do YouTube
- * vira um vídeo incorporado em vez de imagem estática.
+ * Banner de destaque em carrossel — avança sozinho, com setas e
+ * indicadores para navegar manualmente. Alimentado pelos itens marcados
+ * "Destaque da semana" no admin; um slide com link do YouTube vira um
+ * vídeo incorporado em vez de imagem estática.
  */
-export function HeroCarousel({ items, variant }: HeroCarouselProps) {
-  const { index, next, prev, goTo } = useAutoCarousel(items.length, 7000);
+export function HeroCarousel({ items, variant, intervalSeconds = 7 }: HeroCarouselProps) {
+  const { index, next, prev, goTo } = useAutoCarousel(items.length, intervalSeconds * 1000);
 
   if (items.length === 0) return null;
 
