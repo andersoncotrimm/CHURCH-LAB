@@ -40,6 +40,11 @@ export function PlatformShell({ user, planName, credits, categories = [], childr
             <Logo />
           </Link>
         }
+        brandCompact={
+          <Link href="/dashboard" aria-label="Início">
+            <Logo iconOnly />
+          </Link>
+        }
         footer={
           <Link
             href="/minha-conta"

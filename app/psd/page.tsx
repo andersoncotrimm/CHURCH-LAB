@@ -11,7 +11,14 @@ import type { Category, PsdFile } from "@/lib/types/psd";
 export const dynamic = "force-dynamic";
 
 interface PsdLibraryPageProps {
-  searchParams: { categoria?: string; busca?: string; ordenar?: string; tipo?: string };
+  searchParams: {
+    categoria?: string;
+    busca?: string;
+    ordenar?: string;
+    tipo?: string;
+    credito_min?: string;
+    credito_max?: string;
+  };
 }
 
 export default async function PsdLibraryPage({ searchParams }: PsdLibraryPageProps) {
@@ -50,6 +57,19 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
   const ordenar = searchParams.ordenar ?? "recentes";
   const tipo = searchParams.tipo;
 
+  // Limites reais dos créditos entre os PSDs publicados — definem o range
+  // do slider de filtro (não um valor fixo tipo "10 a 1000").
+  const creditBounds =
+    allPsds.length > 0
+      ? {
+          min: Math.min(...allPsds.map((psd) => psd.credit_cost)),
+          max: Math.max(...allPsds.map((psd) => psd.credit_cost)),
+        }
+      : undefined;
+
+  const creditoMin = searchParams.credito_min !== undefined ? Number(searchParams.credito_min) : null;
+  const creditoMax = searchParams.credito_max !== undefined ? Number(searchParams.credito_max) : null;
+
   let filtered = allPsds;
 
   if (categoria) {
@@ -60,6 +80,13 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
     filtered = filtered.filter((psd) => !!psd.file_path);
   } else if (tipo === "canva") {
     filtered = filtered.filter((psd) => !!psd.canva_url);
+  }
+
+  if (creditoMin !== null && Number.isFinite(creditoMin)) {
+    filtered = filtered.filter((psd) => psd.credit_cost >= creditoMin);
+  }
+  if (creditoMax !== null && Number.isFinite(creditoMax)) {
+    filtered = filtered.filter((psd) => psd.credit_cost <= creditoMax);
   }
 
   if (busca) {
@@ -94,7 +121,7 @@ export default async function PsdLibraryPage({ searchParams }: PsdLibraryPagePro
         </div>
 
         <div className="mb-6">
-          <LibraryControls />
+          <LibraryControls creditBounds={creditBounds} />
         </div>
 
         {filtered.length === 0 ? (

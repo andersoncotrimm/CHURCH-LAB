@@ -27,6 +27,11 @@ export function PublicShell({
             <Logo />
           </Link>
         }
+        brandCompact={
+          <Link href="/" aria-label="Início">
+            <Logo iconOnly />
+          </Link>
+        }
         footer={
           <Link
             href="/cadastro"

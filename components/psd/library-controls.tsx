@@ -2,8 +2,9 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Search, Layers, FileImage, Palette } from "lucide-react";
+import { Search, Layers, FileImage, Palette, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { RangeSlider } from "@/components/ui/range-slider";
 
 const SORT_OPTIONS = [
   { value: "recentes", label: "Mais recentes" },
@@ -13,18 +14,41 @@ const SORT_OPTIONS = [
   { value: "az", label: "A-Z" },
 ];
 
+/**
+ * Filtro de tipo de arquivo — pensado para crescer sem tocar em nenhuma
+ * outra parte da UI: adicionar/remover um tipo é só editar esta lista
+ * (ícone + valor do parâmetro `tipo` na URL). A barra de filtros e a
+ * lógica de leitura do parâmetro (app/psd/page.tsx) não mudam.
+ */
 const TYPE_FILTERS = [
   { value: "", label: "Todos", icon: Layers },
   { value: "psd", label: "PSD", icon: FileImage },
   { value: "canva", label: "Canva", icon: Palette },
 ];
 
-export function LibraryControls({ placeholder = "Pesquisar PSDs..." }: { placeholder?: string }) {
+export interface LibraryControlsProps {
+  placeholder?: string;
+  /** Menor e maior custo em créditos entre os PSDs exibidos — define os limites do slider. */
+  creditBounds?: { min: number; max: number };
+}
+
+export function LibraryControls({ placeholder = "Pesquisar PSDs...", creditBounds }: LibraryControlsProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [search, setSearch] = React.useState(searchParams.get("busca") ?? "");
   const activeType = searchParams.get("tipo") ?? "";
+
+  const hasCreditFilter = !!creditBounds && creditBounds.max > creditBounds.min;
+  const [creditRange, setCreditRange] = React.useState<[number, number]>(() => {
+    if (!creditBounds) return [0, 0];
+    const min = Number(searchParams.get("credito_min") ?? creditBounds.min);
+    const max = Number(searchParams.get("credito_max") ?? creditBounds.max);
+    return [
+      Number.isFinite(min) ? min : creditBounds.min,
+      Number.isFinite(max) ? max : creditBounds.max,
+    ];
+  });
 
   function updateParam(key: string, value: string) {
     const params = new URLSearchParams(searchParams.toString());
@@ -32,6 +56,31 @@ export function LibraryControls({ placeholder = "Pesquisar PSDs..." }: { placeho
     else params.delete(key);
     router.push(`${pathname}?${params.toString()}`);
   }
+
+  function updateParams(entries: Record<string, string>) {
+    const params = new URLSearchParams(searchParams.toString());
+    for (const [key, value] of Object.entries(entries)) {
+      if (value) params.set(key, value);
+      else params.delete(key);
+    }
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  // Debounce: só empurra a URL 350ms depois do usuário soltar o arrasto,
+  // pra não disparar uma navegação a cada pixel do slider.
+  React.useEffect(() => {
+    if (!hasCreditFilter) return;
+    const [low, high] = creditRange;
+    const isDefault = low === creditBounds!.min && high === creditBounds!.max;
+    const timeout = setTimeout(() => {
+      updateParams({
+        credito_min: isDefault ? "" : String(low),
+        credito_max: isDefault ? "" : String(high),
+      });
+    }, 350);
+    return () => clearTimeout(timeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [creditRange]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -66,27 +115,45 @@ export function LibraryControls({ placeholder = "Pesquisar PSDs..." }: { placeho
         </select>
       </div>
 
-      <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface p-1">
-        {TYPE_FILTERS.map((filter) => {
-          const Icon = filter.icon;
-          const isActive = activeType === filter.value;
-          return (
-            <button
-              key={filter.value || "todos"}
-              type="button"
-              onClick={() => updateParam("tipo", filter.value)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
-                isActive
-                  ? "bg-accent-50 text-accent-700"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {filter.label}
-            </button>
-          );
-        })}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface p-1">
+          {TYPE_FILTERS.map((filter) => {
+            const Icon = filter.icon;
+            const isActive = activeType === filter.value;
+            return (
+              <button
+                key={filter.value || "todos"}
+                type="button"
+                onClick={() => updateParam("tipo", filter.value)}
+                className={cn(
+                  "inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-colors",
+                  isActive
+                    ? "bg-accent-50 text-accent-700"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {filter.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {hasCreditFilter && (
+          <div className="flex items-center gap-3 rounded-lg border border-border bg-surface px-3.5 py-2 sm:w-72">
+            <Zap className="h-3.5 w-3.5 shrink-0 text-accent" />
+            <RangeSlider
+              min={creditBounds!.min}
+              max={creditBounds!.max}
+              value={creditRange}
+              onChange={setCreditRange}
+              className="flex-1"
+            />
+            <span className="shrink-0 whitespace-nowrap text-xs font-medium text-muted-foreground">
+              {creditRange[0]}–{creditRange[1]}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,24 +4,30 @@
 
 @layer base {
   :root {
-    /* CHURCH-LAB — design system premium dark (plataforma de assinatura de PSDs) */
-    --background: 252 42% 6%;
-    --surface: 252 32% 10%;
-    --foreground: 250 25% 96%;
+    /* CHURCH-LAB — design system premium dark, estilo "cinema/streaming"
+       (preto quente + vermelho vívido, referência: filmbox). */
+    --background: 350 35% 5%;
+    --surface: 350 22% 9%;
+    --foreground: 20 20% 97%;
 
-    --muted: 252 22% 15%;
-    --muted-foreground: 252 12% 68%;
+    --muted: 350 16% 14%;
+    --muted-foreground: 350 10% 66%;
 
-    --border: 252 22% 20%;
-    --input: 252 22% 22%;
-    --ring: 258 90% 68%;
+    --border: 350 16% 18%;
+    --input: 350 16% 20%;
+    --ring: 350 85% 58%;
 
-    --accent: 258 88% 66%;
+    --accent: 350 85% 58%;
     --accent-foreground: 0 0% 100%;
 
-    /* Segunda cor do gradiente (roxo -> ciano), usada em botões, glow e tags. */
-    --cyan: 189 94% 60%;
-    --cyan-foreground: 252 42% 6%;
+    /* Segundo tom do gradiente/glow (vermelho -> laranja-avermelhado),
+       usado em botões, glow e no vinheta de fundo. */
+    --accent-2: 8 82% 52%;
+
+    /* Dourado — acento secundário (tags de categoria), ecoa a cor da
+       estrelinha de avaliação da referência. */
+    --cyan: 42 88% 58%;
+    --cyan-foreground: 350 40% 10%;
 
     --success: 152 55% 48%;
     --success-foreground: 0 0% 100%;
@@ -50,8 +56,8 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     background-image:
-      radial-gradient(720px circle at 15% -10%, hsl(var(--accent) / 0.28), transparent 60%),
-      radial-gradient(640px circle at 100% 0%, hsl(var(--cyan) / 0.16), transparent 55%);
+      radial-gradient(900px circle at 20% -10%, hsl(var(--accent) / 0.32), transparent 60%),
+      radial-gradient(700px circle at 100% 0%, hsl(var(--accent-2) / 0.2), transparent 55%);
     background-attachment: fixed;
     background-repeat: no-repeat;
   }
@@ -79,13 +85,13 @@
     scrollbar-width: none;
   }
 
-  /* Gradiente de marca (roxo -> ciano), usado em CTAs e destaques. */
+  /* Gradiente de marca (vermelho -> laranja-avermelhado), usado em CTAs e destaques. */
   .gradient-accent {
-    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--cyan)) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-2)) 100%);
   }
 
   .text-gradient-accent {
-    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--cyan)) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-2)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -97,5 +103,49 @@
 
   .glow-accent-sm {
     box-shadow: 0 0 24px -8px hsl(var(--accent) / 0.5);
+  }
+
+  /*
+   * Slider de faixa (dois <input type="range"> sobrepostos) usado no
+   * filtro de créditos. A trilha nativa fica transparente/sem eventos de
+   * ponteiro — só o "thumb" (bolinha) é clicável/arrastável, deixando os
+   * dois inputs empilhados funcionarem como um único controle de faixa.
+   */
+  .range-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .range-slider-thumb::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    pointer-events: auto;
+    height: 18px;
+    width: 18px;
+    border-radius: 9999px;
+    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-2)) 100%);
+    border: 2px solid hsl(var(--surface));
+    box-shadow: 0 0 0 1px hsl(var(--accent) / 0.4), 0 2px 8px -2px hsl(var(--accent) / 0.6);
+    cursor: grab;
+  }
+
+  .range-slider-thumb::-webkit-slider-thumb:active {
+    cursor: grabbing;
+  }
+
+  .range-slider-thumb::-moz-range-thumb {
+    pointer-events: auto;
+    height: 18px;
+    width: 18px;
+    border-radius: 9999px;
+    background-image: linear-gradient(135deg, hsl(var(--accent)) 0%, hsl(var(--accent-2)) 100%);
+    border: 2px solid hsl(var(--surface));
+    box-shadow: 0 0 0 1px hsl(var(--accent) / 0.4), 0 2px 8px -2px hsl(var(--accent) / 0.6);
+    cursor: grab;
+  }
+
+  .range-slider-thumb::-moz-range-track {
+    background: transparent;
+    border: none;
   }
 }
