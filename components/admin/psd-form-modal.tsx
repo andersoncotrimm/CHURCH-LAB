@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { slugify } from "@/lib/slugify";
+import { createClient } from "@/utils/supabase/client";
 import { createPsd, updatePsd } from "@/app/admin/psd/actions";
 import { CONTENT_TYPES } from "@/lib/types/psd";
 import type { Category, PsdFile } from "@/lib/types/psd";
@@ -21,6 +22,11 @@ export interface PsdFormModalProps {
 function formatBytes(bytes: number | null) {
   if (!bytes) return null;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function extensionOf(file: File, fallback: string): string {
+  const parts = file.name.split(".");
+  return parts.length > 1 ? parts.pop()!.toLowerCase() : fallback;
 }
 
 export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalProps) {
@@ -60,20 +66,78 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
     setError(null);
     setLoading(true);
 
-    const formData = new FormData(event.currentTarget);
-    formData.delete("category_ids");
-    for (const id of selectedCategoryIds) formData.append("category_ids", id);
+    try {
+      const formData = new FormData(event.currentTarget);
+      formData.delete("category_ids");
+      for (const id of selectedCategoryIds) formData.append("category_ids", id);
 
-    const result = isEditing ? await updatePsd(psd.id, formData) : await createPsd(formData);
+      // Os arquivos sobem direto daqui pro Storage, pelo navegador — nunca
+      // passam pela Server Action (que tem um limite de tamanho de payload
+      // bem menor que um PSD real). A Server Action só recebe o path/URL
+      // resultante, como texto.
+      const thumbnailFile = formData.get("thumbnail") as File | null;
+      const previewFile = formData.get("preview") as File | null;
+      const originalFile = formData.get("original") as File | null;
+      formData.delete("thumbnail");
+      formData.delete("preview");
+      formData.delete("original");
 
-    setLoading(false);
+      const pathSlug = slug || slugify(String(formData.get("title") ?? "")) || `psd-${Date.now()}`;
+      const supabase = createClient();
 
-    if (result.error) {
-      setError(result.error);
-      return;
+      let thumbnailUrl = psd?.thumbnail_url ?? "";
+      if (thumbnailFile && thumbnailFile.size > 0) {
+        const path = `${pathSlug}/thumbnail.${extensionOf(thumbnailFile, "jpg")}`;
+        const { error: uploadError } = await supabase.storage
+          .from("psd-thumbnails")
+          .upload(path, thumbnailFile, { upsert: true, contentType: thumbnailFile.type || undefined });
+        if (uploadError) throw new Error(`Falha ao enviar a thumbnail: ${uploadError.message}`);
+        thumbnailUrl = supabase.storage.from("psd-thumbnails").getPublicUrl(path).data.publicUrl;
+      }
+
+      let previewUrl = psd?.preview_url ?? "";
+      if (previewFile && previewFile.size > 0) {
+        const path = `${pathSlug}/preview.${extensionOf(previewFile, "jpg")}`;
+        const { error: uploadError } = await supabase.storage
+          .from("psd-previews")
+          .upload(path, previewFile, { upsert: true, contentType: previewFile.type || undefined });
+        if (uploadError) throw new Error(`Falha ao enviar o preview: ${uploadError.message}`);
+        previewUrl = supabase.storage.from("psd-previews").getPublicUrl(path).data.publicUrl;
+      }
+
+      let filePath = psd?.file_path ?? "";
+      let fileSize = psd?.file_size ?? null;
+      let fileFormat = psd?.file_format ?? "";
+      if (originalFile && originalFile.size > 0) {
+        const ext = extensionOf(originalFile, "psd");
+        filePath = `${pathSlug}/original.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from("psd-originals")
+          .upload(filePath, originalFile, { upsert: true, contentType: originalFile.type || "application/octet-stream" });
+        if (uploadError) throw new Error(`Falha ao enviar o arquivo PSD: ${uploadError.message}`);
+        fileSize = originalFile.size;
+        fileFormat = ext;
+      }
+
+      formData.set("thumbnail_url", thumbnailUrl);
+      formData.set("preview_url", previewUrl);
+      formData.set("file_path", filePath);
+      formData.set("file_size", fileSize !== null ? String(fileSize) : "");
+      formData.set("file_format", fileFormat);
+
+      const result = isEditing ? await updatePsd(psd.id, formData) : await createPsd(formData);
+
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro inesperado ao salvar. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
-
-    onClose();
   }
 
   return (
@@ -81,7 +145,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
       open={open}
       onClose={onClose}
       title={isEditing ? `Editar PSD — ${psd.title}` : "Novo PSD"}
-      description="Esses dados alimentam a biblioteca pública em /psd."
+      description="Só o nome é obrigatório — o resto você pode completar depois."
       className="max-w-xl"
     >
       <form onSubmit={handleSubmit} className="max-h-[75vh] space-y-4 overflow-y-auto pr-1">
@@ -93,7 +157,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
         )}
 
         <Input
-          label="Título"
+          label="Nome"
           name="title"
           defaultValue={psd?.title}
           placeholder="Ex: Kit Stories Culto de Jovens"
@@ -103,7 +167,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
         />
 
         <Input
-          label="Slug"
+          label="Slug (opcional)"
           name="slug"
           value={slug}
           onChange={(event) => {
@@ -111,13 +175,12 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
             setSlug(event.target.value);
           }}
           placeholder="kit-stories-culto-de-jovens"
-          hint="Usado na URL pública (/psd/...)."
-          required
+          hint="Usado na URL pública (/psd/...). Se deixar em branco, é gerado a partir do nome."
           disabled={loading}
         />
 
         <Textarea
-          label="Descrição"
+          label="Descrição (opcional)"
           name="description"
           defaultValue={psd?.description ?? ""}
           placeholder="Uma descrição curta do material, visível na página de detalhes."
@@ -147,13 +210,12 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
 
         <div className="grid grid-cols-2 gap-3">
           <Input
-            label="Custo em créditos"
+            label="Custo em créditos (opcional)"
             name="credit_cost"
             type="number"
             step="1"
             min="0"
             defaultValue={psd?.credit_cost ?? 0}
-            required
             disabled={loading}
           />
           <Input
@@ -178,7 +240,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
         />
 
         <div>
-          <p className="mb-1.5 text-sm font-medium text-foreground">Categorias</p>
+          <p className="mb-1.5 text-sm font-medium text-foreground">Categorias (opcional)</p>
           {categories.length === 0 ? (
             <p className="text-xs text-muted-foreground">Nenhuma categoria cadastrada ainda.</p>
           ) : (
@@ -205,7 +267,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
         <div className="space-y-3 rounded-lg border border-border p-3">
           <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
             <FileImage className="h-4 w-4" />
-            Arquivos
+            Arquivos (opcionais — dá pra completar depois)
           </p>
 
           <div>
@@ -238,7 +300,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
 
           <div>
             <label htmlFor="original" className="mb-1 block text-xs font-medium text-muted-foreground">
-              Arquivo PSD original {isEditing ? "(opcional — deixe em branco para manter o atual)" : "(opcional se preencher o link do Canva abaixo)"}
+              Arquivo PSD original {isEditing ? "(opcional — deixe em branco para manter o atual)" : "(opcional)"}
             </label>
             <input
               id="original"
@@ -256,12 +318,11 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
           </div>
 
           <Input
-            label="Link do template no Canva (opcional se enviar o PSD acima)"
+            label="Link do template no Canva (opcional)"
             name="canva_url"
             type="url"
             defaultValue={psd?.canva_url ?? ""}
             placeholder="https://www.canva.com/design/..."
-            hint="Pelo menos um dos dois — arquivo PSD ou link do Canva — precisa existir."
             disabled={loading}
           />
         </div>
