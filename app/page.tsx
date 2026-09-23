@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { PublicShell } from "@/components/public/public-shell";
 import { HeroCarousel } from "@/components/psd/hero-carousel";
 import { PsdRow } from "@/components/psd/psd-row";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Layers } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
@@ -76,19 +75,7 @@ export default async function LandingPage() {
     <PublicShell categories={categories}>
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         {heroItems.length > 0 ? (
-          <HeroCarousel
-            items={heroItems}
-            renderActions={(psd) => (
-              <>
-                <Link href="/login">
-                  <Button variant="accent">Entrar para baixar</Button>
-                </Link>
-                <Link href={`/psd/${psd.slug}`}>
-                  <Button variant="outline">Mais informações</Button>
-                </Link>
-              </>
-            )}
-          />
+          <HeroCarousel items={heroItems} variant="guest" />
         ) : (
           <div className="rounded-2xl border border-border bg-surface p-6 sm:p-10">
             <EmptyState

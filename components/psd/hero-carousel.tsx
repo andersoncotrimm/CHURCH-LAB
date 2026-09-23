@@ -1,8 +1,10 @@
 "use client";
 
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, Layers } from "lucide-react";
+import Link from "next/link";
+import { ChevronLeft, ChevronRight, Layers, Download, LogIn } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAutoCarousel } from "@/lib/hooks/use-auto-carousel";
 import { getYoutubeEmbedUrl } from "@/lib/youtube";
@@ -10,7 +12,13 @@ import type { PsdFile } from "@/lib/types/psd";
 
 export interface HeroCarouselProps {
   items: PsdFile[];
-  renderActions: (psd: PsdFile) => React.ReactNode;
+  /**
+   * "guest": CTA de login (visitante). "member": CTA direto pra página do
+   * item (usuário logado). Fica como uma opção fixa (em vez de receber a
+   * ação pronta via prop) porque funções não podem atravessar a fronteira
+   * Server -> Client Component no Next.js.
+   */
+  variant: "guest" | "member";
 }
 
 /**
@@ -19,7 +27,7 @@ export interface HeroCarouselProps {
  * marcados "Destaque da semana" no admin; um slide com link do YouTube
  * vira um vídeo incorporado em vez de imagem estática.
  */
-export function HeroCarousel({ items, renderActions }: HeroCarouselProps) {
+export function HeroCarousel({ items, variant }: HeroCarouselProps) {
   const { index, next, prev, goTo } = useAutoCarousel(items.length, 7000);
 
   if (items.length === 0) return null;
@@ -81,7 +89,28 @@ export function HeroCarousel({ items, renderActions }: HeroCarouselProps) {
           {psd.description && (
             <p className="line-clamp-2 text-sm text-muted-foreground sm:text-base">{psd.description}</p>
           )}
-          <div className="mt-1 flex flex-wrap items-center gap-3">{renderActions(psd)}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-3">
+            {variant === "guest" ? (
+              <>
+                <Link href="/login">
+                  <Button variant="accent">
+                    <LogIn className="h-4 w-4" />
+                    Entrar para baixar
+                  </Button>
+                </Link>
+                <Link href={`/psd/${psd.slug}`}>
+                  <Button variant="outline">Mais informações</Button>
+                </Link>
+              </>
+            ) : (
+              <Link href={`/psd/${psd.slug}`}>
+                <Button variant="accent">
+                  <Download className="h-4 w-4" />
+                  Ver e baixar
+                </Button>
+              </Link>
+            )}
+          </div>
         </div>
       )}
 

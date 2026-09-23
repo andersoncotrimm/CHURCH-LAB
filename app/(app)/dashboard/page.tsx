@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, LayoutGrid } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PsdRow } from "@/components/psd/psd-row";
@@ -65,19 +65,7 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted-foreground">Continue de onde parou ou explore novos materiais.</p>
       </div>
 
-      {heroItems.length > 0 && (
-        <HeroCarousel
-          items={heroItems}
-          renderActions={(psd) => (
-            <Link href={`/psd/${psd.slug}`}>
-              <Button variant="accent">
-                <Download className="h-4 w-4" />
-                Ver e baixar
-              </Button>
-            </Link>
-          )}
-        />
-      )}
+      {heroItems.length > 0 && <HeroCarousel items={heroItems} variant="member" />}
 
       {favoritePsds.length > 0 && (
         <section className="flex flex-col gap-3">
