@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { useSiteName } from "@/components/brand/site-settings-provider";
 
 function Logo({
   className,
@@ -9,6 +12,11 @@ function Logo({
   iconOnly?: boolean;
   inverted?: boolean;
 }) {
+  const siteName = useSiteName();
+  // Mantém o destaque de cor no sufixo "LAB" apenas para o nome padrão —
+  // um nome customizado pelo admin é exibido em tom único.
+  const isDefaultName = siteName === "CHURCH-LAB";
+
   return (
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <span
@@ -29,7 +37,13 @@ function Logo({
             inverted ? "text-background" : "text-foreground"
           )}
         >
-          CHURCH<span className={inverted ? "text-accent-400" : "text-accent"}>LAB</span>
+          {isDefaultName ? (
+            <>
+              CHURCH<span className={inverted ? "text-accent-400" : "text-accent"}>LAB</span>
+            </>
+          ) : (
+            siteName
+          )}
         </span>
       )}
     </span>

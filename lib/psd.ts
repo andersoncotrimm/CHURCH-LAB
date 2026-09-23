@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { Category, PsdFile } from "@/lib/types/psd";
+import type { Category, PsdFile, ContentType } from "@/lib/types/psd";
 
 export interface PsdFileRow {
   id: string;
@@ -17,6 +17,7 @@ export interface PsdFileRow {
   credit_cost: number;
   is_published: boolean;
   is_featured: boolean;
+  content_type: ContentType;
   created_at: string;
   updated_at: string;
   psd_categories: { categories: Category | null }[] | null;
@@ -69,13 +70,21 @@ export function mapPsdRow(row: PsdFileRow): Omit<PsdFile, "downloadsCount"> {
   };
 }
 
-/** Biblioteca pública: só PSDs publicados, mais recentes primeiro. */
-export async function getPublishedPsds(supabase: SupabaseClient): Promise<PsdFile[]> {
-  const { data, error } = await supabase
+/**
+ * Biblioteca pública: só arquivos publicados, mais recentes primeiro.
+ * `contentType` filtra por seção (psd, elementos, plugins, ferramentas,
+ * sistemas) — omitido, traz todas as seções (usado nas fileiras estilo
+ * Netflix da home/dashboard, que misturam tudo).
+ */
+export async function getPublishedPsds(supabase: SupabaseClient, contentType?: string): Promise<PsdFile[]> {
+  let query = supabase
     .from("psd_files")
     .select("*, psd_categories(categories(*))")
-    .eq("is_published", true)
-    .order("created_at", { ascending: false });
+    .eq("is_published", true);
+
+  if (contentType) query = query.eq("content_type", contentType);
+
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error || !data) return [];
 

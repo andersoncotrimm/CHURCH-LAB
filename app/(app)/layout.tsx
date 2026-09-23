@@ -19,7 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name, avatar_url")
+    .select("full_name, avatar_url, is_admin")
     .eq("id", user.id)
     .single();
 
@@ -38,6 +38,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       planName={credits?.planName ?? null}
       credits={credits?.available ?? null}
       categories={categories}
+      isAdmin={profile?.is_admin ?? false}
     >
       {children}
     </PlatformShell>

@@ -18,7 +18,10 @@ import {
 } from "@/components/ui/table";
 import { PsdFormModal } from "@/components/admin/psd-form-modal";
 import { togglePsdPublished, deletePsd } from "@/app/admin/psd/actions";
+import { CONTENT_TYPES } from "@/lib/types/psd";
 import type { Category, PsdFile } from "@/lib/types/psd";
+
+const CONTENT_TYPE_LABELS = Object.fromEntries(CONTENT_TYPES.map((type) => [type.value, type.label]));
 
 export function PsdsTable({ psds, categories }: { psds: PsdFile[]; categories: Category[] }) {
   const router = useRouter();
@@ -106,6 +109,7 @@ export function PsdsTable({ psds, categories }: { psds: PsdFile[]; categories: C
           <TableHeader>
             <TableRow>
               <TableHead>PSD</TableHead>
+              <TableHead>Seção</TableHead>
               <TableHead>Categorias</TableHead>
               <TableHead>Créditos</TableHead>
               <TableHead>Downloads</TableHead>
@@ -137,6 +141,9 @@ export function PsdsTable({ psds, categories }: { psds: PsdFile[]; categories: C
                       <span className="block text-xs text-muted-foreground">/{psd.slug}</span>
                     </div>
                   </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {CONTENT_TYPE_LABELS[psd.content_type] ?? psd.content_type}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {psd.categories.length > 0 ? psd.categories.map((c) => c.name).join(", ") : "—"}

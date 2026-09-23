@@ -2,6 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { CONTENT_TYPES } from "@/lib/types/psd";
+import type { ContentType } from "@/lib/types/psd";
 
 export interface ActionResult {
   error?: string;
@@ -17,6 +19,7 @@ interface PsdFields {
   slides_count: number | null;
   is_published: boolean;
   is_featured: boolean;
+  content_type: ContentType;
   category_ids: string[];
 }
 
@@ -30,9 +33,15 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
   const slidesCountRaw = String(formData.get("slides_count") ?? "").trim();
   const isPublished = formData.get("is_published") === "on";
   const isFeatured = formData.get("is_featured") === "on";
+  const contentTypeRaw = String(formData.get("content_type") ?? "psd");
   const categoryIds = formData.getAll("category_ids").map(String).filter(Boolean);
 
   if (!title) return { error: "Título é obrigatório." };
+
+  if (!CONTENT_TYPES.some((type) => type.value === contentTypeRaw)) {
+    return { error: "Seção inválida." };
+  }
+  const contentType = contentTypeRaw as ContentType;
 
   if (!slug || !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(slug)) {
     return { error: "Slug inválido. Use apenas letras minúsculas, números e hífens." };
@@ -66,6 +75,7 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
       slides_count: slidesCount,
       is_published: isPublished,
       is_featured: isFeatured,
+      content_type: contentType,
       category_ids: categoryIds,
     },
   };
@@ -170,6 +180,7 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
       credit_cost: parsed.values.credit_cost,
       is_published: parsed.values.is_published,
       is_featured: parsed.values.is_featured,
+      content_type: parsed.values.content_type,
     })
     .select("id")
     .single();
@@ -183,6 +194,10 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
 
   revalidatePath("/admin/psd");
   revalidatePath("/psd");
+  revalidatePath("/elementos");
+  revalidatePath("/plugins");
+  revalidatePath("/ferramentas");
+  revalidatePath("/sistemas");
   revalidatePath("/categorias");
   revalidatePath("/dashboard");
   return {};
@@ -262,6 +277,7 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
       credit_cost: parsed.values.credit_cost,
       is_published: parsed.values.is_published,
       is_featured: parsed.values.is_featured,
+      content_type: parsed.values.content_type,
     })
     .eq("id", id);
 
@@ -273,6 +289,10 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
   revalidatePath("/admin/psd");
   revalidatePath("/psd");
   revalidatePath(`/psd/${slug}`);
+  revalidatePath("/elementos");
+  revalidatePath("/plugins");
+  revalidatePath("/ferramentas");
+  revalidatePath("/sistemas");
   revalidatePath("/categorias");
   revalidatePath("/dashboard");
   return {};
@@ -285,6 +305,10 @@ export async function togglePsdPublished(id: string, nextPublished: boolean): Pr
 
   revalidatePath("/admin/psd");
   revalidatePath("/psd");
+  revalidatePath("/elementos");
+  revalidatePath("/plugins");
+  revalidatePath("/ferramentas");
+  revalidatePath("/sistemas");
   revalidatePath("/dashboard");
   return {};
 }
@@ -302,6 +326,10 @@ export async function deletePsd(id: string): Promise<ActionResult> {
 
   revalidatePath("/admin/psd");
   revalidatePath("/psd");
+  revalidatePath("/elementos");
+  revalidatePath("/plugins");
+  revalidatePath("/ferramentas");
+  revalidatePath("/sistemas");
   revalidatePath("/categorias");
   revalidatePath("/dashboard");
   return {};

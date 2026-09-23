@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { slugify } from "@/lib/slugify";
 import { createPsd, updatePsd } from "@/app/admin/psd/actions";
+import { CONTENT_TYPES } from "@/lib/types/psd";
 import type { Category, PsdFile } from "@/lib/types/psd";
 
 export interface PsdFormModalProps {
@@ -123,6 +124,26 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
           rows={3}
           disabled={loading}
         />
+
+        <div className="w-full">
+          <label htmlFor="content_type" className="mb-1.5 block text-sm font-medium text-foreground">
+            Seção
+          </label>
+          <select
+            id="content_type"
+            name="content_type"
+            defaultValue={psd?.content_type ?? "psd"}
+            disabled={loading}
+            className="h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            {CONTENT_TYPES.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1.5 text-xs text-muted-foreground">Em qual parte do menu esse item aparece.</p>
+        </div>
 
         <div className="grid grid-cols-2 gap-3">
           <Input

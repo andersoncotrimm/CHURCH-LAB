@@ -2,9 +2,25 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Search, Layers, FileImage, Palette, Zap } from "lucide-react";
+import {
+  Search,
+  Layers,
+  FileImage,
+  Palette,
+  Zap,
+  Puzzle,
+  Plug,
+  Wrench,
+  Grid3x3,
+  Sparkles,
+  Star,
+  Tag,
+  type LucideIcon,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RangeSlider } from "@/components/ui/range-slider";
+import type { FilterType } from "@/lib/filters";
+import type { FilterIconName } from "@/lib/filter-icons";
 
 const SORT_OPTIONS = [
   { value: "recentes", label: "Mais recentes" },
@@ -14,25 +30,37 @@ const SORT_OPTIONS = [
   { value: "az", label: "A-Z" },
 ];
 
-/**
- * Filtro de tipo de arquivo — pensado para crescer sem tocar em nenhuma
- * outra parte da UI: adicionar/remover um tipo é só editar esta lista
- * (ícone + valor do parâmetro `tipo` na URL). A barra de filtros e a
- * lógica de leitura do parâmetro (app/psd/page.tsx) não mudam.
- */
-const TYPE_FILTERS = [
-  { value: "", label: "Todos", icon: Layers },
-  { value: "psd", label: "PSD", icon: FileImage },
-  { value: "canva", label: "Canva", icon: Palette },
-];
+/** Ícones disponíveis para os filtros administráveis (lib/filter-icons.ts + /admin/filtros). */
+export const FILTER_ICONS: Record<FilterIconName, LucideIcon> = {
+  Layers,
+  FileImage,
+  Palette,
+  Puzzle,
+  Plug,
+  Wrench,
+  Grid3x3,
+  Sparkles,
+  Star,
+  Tag,
+};
 
 export interface LibraryControlsProps {
   placeholder?: string;
   /** Menor e maior custo em créditos entre os PSDs exibidos — define os limites do slider. */
   creditBounds?: { min: number; max: number };
+  /** Filtros de tipo de arquivo, administráveis em /admin/filtros. */
+  filters?: FilterType[];
 }
 
-export function LibraryControls({ placeholder = "Pesquisar PSDs...", creditBounds }: LibraryControlsProps) {
+export function LibraryControls({ placeholder = "Pesquisar PSDs...", creditBounds, filters = [] }: LibraryControlsProps) {
+  const typeFilters = [
+    { value: "", label: "Todos", icon: Layers },
+    ...filters.map((filter) => ({
+      value: filter.value,
+      label: filter.label,
+      icon: FILTER_ICONS[filter.icon as FilterIconName] ?? Layers,
+    })),
+  ];
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -117,7 +145,7 @@ export function LibraryControls({ placeholder = "Pesquisar PSDs...", creditBound
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-1.5 rounded-lg border border-border bg-surface p-1">
-          {TYPE_FILTERS.map((filter) => {
+          {typeFilters.map((filter) => {
             const Icon = filter.icon;
             const isActive = activeType === filter.value;
             return (

@@ -27,8 +27,19 @@ export interface PsdFile {
   credit_cost: number;
   is_published: boolean;
   is_featured: boolean;
+  content_type: ContentType;
   created_at: string;
   updated_at: string;
   categories: Category[];
   downloadsCount: number;
 }
+
+export type ContentType = "psd" | "elementos" | "plugins" | "ferramentas" | "sistemas";
+
+export const CONTENT_TYPES: { value: ContentType; label: string }[] = [
+  { value: "psd", label: "PSD" },
+  { value: "elementos", label: "Elementos" },
+  { value: "plugins", label: "Plugins" },
+  { value: "ferramentas", label: "Ferramentas" },
+  { value: "sistemas", label: "Sistemas" },
+];
