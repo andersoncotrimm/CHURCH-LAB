@@ -10,10 +10,12 @@ export function ProfileForm({
   fullName,
   phone,
   email,
+  username,
 }: {
   fullName: string;
   phone: string;
   email: string;
+  username: string;
 }) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -55,6 +57,14 @@ export function ProfileForm({
       />
       <Input label="Nome completo" name="full_name" defaultValue={fullName} required disabled={loading} />
       <Input label="Telefone" name="phone" defaultValue={phone} placeholder="(00) 00000-0000" disabled={loading} />
+      <Input
+        label="Nome de usuário (opcional)"
+        name="username"
+        defaultValue={username}
+        placeholder="Ex: joao.silva"
+        hint="Se preenchido, você pode entrar digitando só ele em vez do e-mail completo."
+        disabled={loading}
+      />
 
       <Button type="submit" variant="accent" loading={loading}>
         Salvar alterações

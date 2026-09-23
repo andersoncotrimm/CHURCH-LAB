@@ -16,7 +16,7 @@ export default async function MinhaContaPage() {
   if (!user) return null;
 
   const [{ data: profile }, credits] = await Promise.all([
-    supabase.from("profiles").select("full_name, phone, avatar_url, created_at").eq("id", user.id).single(),
+    supabase.from("profiles").select("full_name, phone, avatar_url, created_at, username").eq("id", user.id).single(),
     getUserCreditsSummary(supabase, user.id),
   ]);
 
@@ -45,6 +45,7 @@ export default async function MinhaContaPage() {
             fullName={profile?.full_name ?? ""}
             phone={profile?.phone ?? ""}
             email={user.email ?? ""}
+            username={profile?.username ?? ""}
           />
         </CardContent>
       </Card>

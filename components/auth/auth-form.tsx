@@ -31,7 +31,7 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
     setConfirmEmailSent(false);
 
     const formData = new FormData(event.currentTarget);
-    const email = String(formData.get("email") ?? "");
+    const identifier = String(formData.get("email") ?? "").trim();
     const password = String(formData.get("password") ?? "");
     const fullName = String(formData.get("name") ?? "");
 
@@ -46,6 +46,20 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
       const supabase = createClient();
 
       if (mode === "login") {
+        // Quem tem um username cadastrado pode digitar ele em vez do
+        // e-mail completo — resolvemos pro e-mail real antes de logar.
+        let email = identifier;
+        if (!identifier.includes("@")) {
+          const { data: resolvedEmail, error: resolveError } = await supabase.rpc("resolve_login_email", {
+            p_username: identifier,
+          });
+          if (resolveError || !resolvedEmail) {
+            setErrorMessage("Usuário ou e-mail não encontrado.");
+            return;
+          }
+          email = resolvedEmail;
+        }
+
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) {
           setErrorMessage(
@@ -59,7 +73,7 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
         router.refresh();
       } else {
         const { data, error } = await supabase.auth.signUp({
-          email,
+          email: identifier,
           password,
           options: { data: { full_name: fullName } },
         });
@@ -147,7 +161,7 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
             </h1>
             <p className="mt-1.5 text-sm text-muted-foreground">
               {mode === "login"
-                ? "Entre com seu e-mail para continuar no CHURCH-LAB."
+                ? "Entre com seu e-mail ou usuário para continuar no CHURCH-LAB."
                 : "Comece a organizar a sua igreja em minutos."}
             </p>
           </div>
@@ -178,11 +192,11 @@ export function AuthForm({ initialMode }: { initialMode: "login" | "signup" }) {
             )}
 
             <Input
-              label="E-mail"
+              label={mode === "login" ? "E-mail ou usuário" : "E-mail"}
               name="email"
-              type="email"
-              placeholder="voce@igreja.com"
-              autoComplete="email"
+              type={mode === "login" ? "text" : "email"}
+              placeholder={mode === "login" ? "voce@igreja.com ou seu usuário" : "voce@igreja.com"}
+              autoComplete={mode === "login" ? "username" : "email"}
               startIcon={<Mail className="h-4 w-4" />}
               required
               disabled={loading}
