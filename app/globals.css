@@ -5,29 +5,29 @@
 @layer base {
   :root {
     /* CHURCH-LAB — design system premium dark, estilo "cinema/streaming"
-       (preto quente + vermelho vívido, referência: filmbox). */
-    --background: 350 35% 5%;
-    --surface: 350 22% 9%;
-    --foreground: 20 20% 97%;
+       (preto neutro + vermelho vívido no tom Netflix). */
+    --background: 0 0% 4%;
+    --surface: 0 0% 9%;
+    --foreground: 0 0% 97%;
 
-    --muted: 350 16% 14%;
-    --muted-foreground: 350 10% 66%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
 
-    --border: 350 16% 18%;
-    --input: 350 16% 20%;
-    --ring: 350 85% 58%;
+    --border: 0 0% 19%;
+    --input: 0 0% 21%;
+    --ring: 357 92% 47%;
 
-    --accent: 350 85% 58%;
+    --accent: 357 92% 47%;
     --accent-foreground: 0 0% 100%;
 
-    /* Segundo tom do gradiente/glow (vermelho -> laranja-avermelhado),
+    /* Segundo tom do gradiente/glow (vermelho um pouco mais escuro),
        usado em botões, glow e no vinheta de fundo. */
-    --accent-2: 8 82% 52%;
+    --accent-2: 3 82% 38%;
 
     /* Dourado — acento secundário (tags de categoria), ecoa a cor da
        estrelinha de avaliação da referência. */
     --cyan: 42 88% 58%;
-    --cyan-foreground: 350 40% 10%;
+    --cyan-foreground: 0 0% 6%;
 
     --success: 152 55% 48%;
     --success-foreground: 0 0% 100%;
@@ -56,8 +56,8 @@
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
     background-image:
-      radial-gradient(900px circle at 20% -10%, hsl(var(--accent) / 0.32), transparent 60%),
-      radial-gradient(700px circle at 100% 0%, hsl(var(--accent-2) / 0.2), transparent 55%);
+      radial-gradient(800px circle at 20% -10%, hsl(var(--accent) / 0.14), transparent 55%),
+      radial-gradient(600px circle at 100% 0%, hsl(var(--accent-2) / 0.09), transparent 50%);
     background-attachment: fixed;
     background-repeat: no-repeat;
   }

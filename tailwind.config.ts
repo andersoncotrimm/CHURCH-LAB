@@ -36,17 +36,17 @@ const config: Config = {
           // Escala pensada para fundo ESCURO: números baixos = tons
           // escuros/sutis (fundos de badge, item ativo do menu); números
           // altos = tons claros/vibrantes (texto sobre fundo escuro).
-          // Vermelho vívido (estilo streaming/cinema), referência: filmbox.
-          50: "#2a0f16",
-          100: "#3a1420",
-          200: "#571d2d",
-          300: "#7e2740",
-          400: "#ac3252",
-          500: "#d93e64",
-          600: "#ef3957",
-          700: "#fa5c78",
-          800: "#fba3b5",
-          900: "#fde3e8",
+          // Vermelho vívido no tom Netflix (~#E50914), não rosa.
+          50: "#280b0d",
+          100: "#371012",
+          200: "#521417",
+          300: "#79151a",
+          400: "#ae131b",
+          500: "#d30d17",
+          600: "#e60a15",
+          700: "#f4343d",
+          800: "#f47b81",
+          900: "#f9c8ca",
         },
         cyan: {
           DEFAULT: "hsl(var(--cyan))",
