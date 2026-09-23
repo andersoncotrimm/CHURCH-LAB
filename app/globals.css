@@ -69,6 +69,37 @@
   :focus-visible {
     @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
   }
+
+  /*
+   * Barra de rolagem personalizada na cor de destaque — em vez da barra
+   * nativa do sistema operacional. Usa --accent (a mesma variável que
+   * /admin/configuracoes controla como "cor dos botões"), então já segue
+   * a cor escolhida ali automaticamente.
+   */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--accent) / 0.55) transparent;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--accent) / 0.55);
+    border-radius: 9999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(var(--accent) / 0.85);
+  }
 }
 
 @layer utilities {

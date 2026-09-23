@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PublicShell } from "@/components/public/public-shell";
-import { HeroBanner } from "@/components/psd/hero-banner";
+import { HeroCarousel } from "@/components/psd/hero-carousel";
 import { PsdRow } from "@/components/psd/psd-row";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -9,6 +9,7 @@ import { Layers } from "lucide-react";
 import { createClient } from "@/utils/supabase/server";
 import {
   getPublishedPsds,
+  getFeaturedPsds,
   getPopularCategories,
   getCategories,
   getFavoritesCounts,
@@ -24,6 +25,7 @@ export default async function LandingPage() {
   // anônima com biblioteca vazia, em vez de estourar um erro 500.
   let userId: string | null = null;
   let allPsds: PsdFile[] = [];
+  let featuredPsds: PsdFile[] = [];
   let popularCategories: PopularCategory[] = [];
   let categories: Category[] = [];
   let favoritesCounts = new Map<string, number>();
@@ -37,8 +39,9 @@ export default async function LandingPage() {
     userId = user?.id ?? null;
 
     if (!userId) {
-      [allPsds, popularCategories, categories] = await Promise.all([
+      [allPsds, featuredPsds, popularCategories, categories] = await Promise.all([
         getPublishedPsds(supabase),
+        getFeaturedPsds(supabase),
         getPopularCategories(supabase),
         getCategories(supabase),
       ]);
@@ -50,8 +53,15 @@ export default async function LandingPage() {
 
   if (userId) redirect("/dashboard");
 
-  const heroItem = [...allPsds].sort((a, b) => b.downloadsCount - a.downloadsCount)[0] ?? null;
-  const rest = allPsds.filter((p) => p.id !== heroItem?.id);
+  // Sem destaques escolhidos no admin, cai pro mais baixado como único slide.
+  const heroItems =
+    featuredPsds.length > 0
+      ? featuredPsds
+      : [[...allPsds].sort((a, b) => b.downloadsCount - a.downloadsCount)[0]].filter(
+          (p): p is PsdFile => !!p
+        );
+  const heroIds = new Set(heroItems.map((p) => p.id));
+  const rest = allPsds.filter((p) => !heroIds.has(p.id));
 
   const mostDownloaded = [...rest].sort((a, b) => b.downloadsCount - a.downloadsCount).slice(0, 12);
   const newest = [...rest]
@@ -65,19 +75,19 @@ export default async function LandingPage() {
   return (
     <PublicShell categories={categories}>
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
-        {heroItem ? (
-          <HeroBanner
-            psd={heroItem}
-            actions={
+        {heroItems.length > 0 ? (
+          <HeroCarousel
+            items={heroItems}
+            renderActions={(psd) => (
               <>
                 <Link href="/login">
                   <Button variant="accent">Entrar para baixar</Button>
                 </Link>
-                <Link href={`/psd/${heroItem.slug}`}>
+                <Link href={`/psd/${psd.slug}`}>
                   <Button variant="outline">Mais informações</Button>
                 </Link>
               </>
-            }
+            )}
           />
         ) : (
           <div className="rounded-2xl border border-border bg-surface p-6 sm:p-10">

@@ -16,6 +16,7 @@ interface PsdFields {
   credit_cost: number;
   dimensions: string;
   canva_url: string;
+  youtube_url: string;
   slides_count: number | null;
   is_published: boolean;
   is_featured: boolean;
@@ -30,6 +31,7 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
   const creditCostRaw = String(formData.get("credit_cost") ?? "");
   const dimensions = String(formData.get("dimensions") ?? "").trim();
   const canvaUrl = String(formData.get("canva_url") ?? "").trim();
+  const youtubeUrl = String(formData.get("youtube_url") ?? "").trim();
   const slidesCountRaw = String(formData.get("slides_count") ?? "").trim();
   const isPublished = formData.get("is_published") === "on";
   const isFeatured = formData.get("is_featured") === "on";
@@ -56,6 +58,10 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
     return { error: "Link do Canva precisa começar com https://" };
   }
 
+  if (youtubeUrl && !/^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//.test(youtubeUrl)) {
+    return { error: "Link do YouTube inválido." };
+  }
+
   let slidesCount: number | null = null;
   if (slidesCountRaw) {
     slidesCount = Number(slidesCountRaw);
@@ -72,6 +78,7 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
       credit_cost: creditCost,
       dimensions,
       canva_url: canvaUrl,
+      youtube_url: youtubeUrl,
       slides_count: slidesCount,
       is_published: isPublished,
       is_featured: isFeatured,
@@ -176,6 +183,7 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
       file_format: originalExt ? originalExt.toUpperCase() : null,
       dimensions: parsed.values.dimensions || null,
       canva_url: canvaUrl || null,
+      youtube_url: parsed.values.youtube_url || null,
       slides_count: parsed.values.slides_count,
       credit_cost: parsed.values.credit_cost,
       is_published: parsed.values.is_published,
@@ -273,6 +281,7 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
       file_format: fileFormat,
       dimensions: parsed.values.dimensions || null,
       canva_url: canvaUrl || null,
+      youtube_url: parsed.values.youtube_url || null,
       slides_count: parsed.values.slides_count,
       credit_cost: parsed.values.credit_cost,
       is_published: parsed.values.is_published,

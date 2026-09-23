@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Home } from "lucide-react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/ui/header";
 import { Logo } from "@/components/brand/logo";
@@ -38,9 +39,18 @@ export function AdminShell({ user, children }: AdminShellProps) {
           </Link>
         }
         footer={
-          <div className="rounded-xl bg-muted/60 p-3.5">
-            <p className="text-xs font-semibold text-foreground">Painel administrativo</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">Centro de controle do CHURCH-LAB</p>
+          <div className="flex flex-col gap-3">
+            <Link
+              href="/"
+              className="flex items-center gap-2.5 rounded-xl border border-border px-3.5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+            >
+              <Home className="h-4 w-4 text-muted-foreground" />
+              Voltar à plataforma
+            </Link>
+            <div className="rounded-xl bg-muted/60 p-3.5">
+              <p className="text-xs font-semibold text-foreground">Painel administrativo</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Centro de controle do CHURCH-LAB</p>
+            </div>
           </div>
         }
         mobileOpen={mobileOpen}

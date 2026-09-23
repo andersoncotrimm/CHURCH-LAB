@@ -20,6 +20,7 @@ export interface PsdFile {
   preview_url: string | null;
   file_path: string | null;
   canva_url: string | null;
+  youtube_url: string | null;
   slides_count: number | null;
   file_size: number | null;
   file_format: string | null;

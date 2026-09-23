@@ -1,0 +1,124 @@
+"use client";
+
+import Image from "next/image";
+import { ChevronLeft, ChevronRight, Layers } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { useAutoCarousel } from "@/lib/hooks/use-auto-carousel";
+import { getYoutubeEmbedUrl } from "@/lib/youtube";
+import type { PsdFile } from "@/lib/types/psd";
+
+export interface HeroCarouselProps {
+  items: PsdFile[];
+  renderActions: (psd: PsdFile) => React.ReactNode;
+}
+
+/**
+ * Banner de destaque em carrossel — avança sozinho a cada 7s, com setas
+ * e indicadores para navegar manualmente. Alimentado pelos itens
+ * marcados "Destaque da semana" no admin; um slide com link do YouTube
+ * vira um vídeo incorporado em vez de imagem estática.
+ */
+export function HeroCarousel({ items, renderActions }: HeroCarouselProps) {
+  const { index, next, prev, goTo } = useAutoCarousel(items.length, 7000);
+
+  if (items.length === 0) return null;
+
+  const psd = items[index];
+  const category = psd.categories[0];
+  const embedUrl = psd.youtube_url ? getYoutubeEmbedUrl(psd.youtube_url) : null;
+
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-border bg-surface shadow-elevated">
+      <div className="relative aspect-[4/5] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
+        {embedUrl ? (
+          <iframe
+            key={psd.id}
+            src={embedUrl}
+            title={psd.title}
+            className="absolute inset-0 h-full w-full"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+          />
+        ) : psd.preview_url || psd.thumbnail_url ? (
+          <Image
+            key={psd.id}
+            src={psd.preview_url ?? psd.thumbnail_url!}
+            alt={psd.title}
+            fill
+            sizes="100vw"
+            className="object-cover"
+            priority
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground/40">
+            <Layers className="h-12 w-12" />
+          </div>
+        )}
+
+        {!embedUrl && (
+          <>
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 hidden bg-gradient-to-r from-background/85 via-background/10 to-transparent sm:block"
+            />
+          </>
+        )}
+      </div>
+
+      {!embedUrl && (
+        <div className="absolute inset-x-0 bottom-0 flex flex-col gap-3 p-6 sm:max-w-lg sm:p-10">
+          {category && (
+            <Badge variant="accent" className="w-fit">
+              {category.name}
+            </Badge>
+          )}
+          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-4xl">{psd.title}</h1>
+          {psd.description && (
+            <p className="line-clamp-2 text-sm text-muted-foreground sm:text-base">{psd.description}</p>
+          )}
+          <div className="mt-1 flex flex-wrap items-center gap-3">{renderActions(psd)}</div>
+        </div>
+      )}
+
+      {items.length > 1 && (
+        <>
+          <button
+            type="button"
+            onClick={prev}
+            aria-label="Destaque anterior"
+            className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
+          <button
+            type="button"
+            onClick={next}
+            aria-label="Próximo destaque"
+            className="absolute right-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-sm transition-colors hover:bg-black/60"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+            {items.map((item, i) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => goTo(i)}
+                aria-label={`Ir para o destaque ${i + 1}`}
+                className={cn(
+                  "h-1.5 rounded-full transition-all",
+                  i === index ? "w-6 bg-accent" : "w-1.5 bg-white/50 hover:bg-white/80"
+                )}
+              />
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+}

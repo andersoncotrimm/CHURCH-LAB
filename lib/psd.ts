@@ -10,6 +10,7 @@ export interface PsdFileRow {
   preview_url: string | null;
   file_path: string | null;
   canva_url: string | null;
+  youtube_url: string | null;
   slides_count: number | null;
   file_size: number | null;
   file_format: string | null;
@@ -89,6 +90,34 @@ export async function getPublishedPsds(supabase: SupabaseClient, contentType?: s
   if (error || !data) return [];
 
   return attachDownloadCounts(supabase, (data as unknown as PsdFileRow[]).map(mapPsdRow));
+}
+
+/** Itens marcados como "destaque da semana" (is_featured) — alimentam o carrossel da home/dashboard. */
+export async function getFeaturedPsds(supabase: SupabaseClient): Promise<PsdFile[]> {
+  const { data, error } = await supabase
+    .from("psd_files")
+    .select("*, psd_categories(categories(*))")
+    .eq("is_published", true)
+    .eq("is_featured", true)
+    .order("updated_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  return attachDownloadCounts(supabase, (data as unknown as PsdFileRow[]).map(mapPsdRow));
+}
+
+/** Todos os PSDs favoritados por um usuário, mais recentes primeiro — carrossel de favoritos do dashboard. */
+export async function getUserFavoritePsds(supabase: SupabaseClient, userId: string): Promise<PsdFile[]> {
+  const { data, error } = await supabase
+    .from("favorites")
+    .select("created_at, psd_files(*, psd_categories(categories(*)))")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+
+  const rows = data.map((row) => row.psd_files).filter(Boolean) as unknown as PsdFileRow[];
+  return attachDownloadCounts(supabase, rows.map(mapPsdRow));
 }
 
 /** Detalhe público de um PSD publicado pelo slug. */

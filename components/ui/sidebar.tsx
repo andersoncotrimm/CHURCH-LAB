@@ -193,15 +193,10 @@ function Sidebar({ items, brand, brandCompact, footer, mobileOpen, onMobileClose
   const searchParams = useSearchParams();
   const search = searchParams.toString();
 
-  const [expanded, setExpanded] = React.useState<Set<string>>(() => {
-    const initial = new Set<string>();
-    for (const item of items) {
-      if (item.children?.some((child) => isChildActive(child, pathname, search))) {
-        initial.add(item.href);
-      }
-    }
-    return initial;
-  });
+  // Começa sempre fechado — mesmo estando numa categoria ativa, o
+  // submenu só abre quando a pessoa clica na seta (pedido explícito:
+  // não abrir sozinho ao entrar na página).
+  const [expanded, setExpanded] = React.useState<Set<string>>(() => new Set());
 
   function toggleExpanded(href: string) {
     setExpanded((prev) => {

@@ -1,16 +1,16 @@
 import Link from "next/link";
-import { Heart, Sparkles, LayoutGrid } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Download, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { PsdCard } from "@/components/psd/psd-card";
-import { PsdFeatureCard } from "@/components/psd/psd-feature-card";
 import { PsdRow } from "@/components/psd/psd-row";
+import { PsdFeatureCard } from "@/components/psd/psd-feature-card";
+import { HeroCarousel } from "@/components/psd/hero-carousel";
+import { FavoritesCarousel } from "@/components/psd/favorites-carousel";
 import { RedownloadButton } from "@/components/psd/redownload-button";
 import { createClient } from "@/utils/supabase/server";
 import { getDashboardData } from "@/lib/dashboard";
 import { getUserCreditsSummary } from "@/lib/credits";
-import { getPublishedPsds, getFavoritesCounts } from "@/lib/psd";
+import { getPublishedPsds, getFeaturedPsds, getUserFavoritePsds, getFavoritesCounts } from "@/lib/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -25,17 +25,23 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
 
-  const [{ continueItem, favoriteItem, newItem, popularCategories }, credits, allPsds, { data: favoriteRows }] =
-    await Promise.all([
-      getDashboardData(supabase, user.id),
-      getUserCreditsSummary(supabase, user.id),
-      getPublishedPsds(supabase),
-      supabase.from("favorites").select("psd_id").eq("user_id", user.id),
-    ]);
+  const [{ continueItem, popularCategories }, credits, allPsds, featuredPsds, favoritePsds] = await Promise.all([
+    getDashboardData(supabase, user.id),
+    getUserCreditsSummary(supabase, user.id),
+    getPublishedPsds(supabase),
+    getFeaturedPsds(supabase),
+    getUserFavoritePsds(supabase, user.id),
+  ]);
   const availableCredits = credits?.available ?? null;
-  const favoritedIds = new Set((favoriteRows ?? []).map((f) => f.psd_id));
+  const favoritedIds = new Set(favoritePsds.map((p) => p.id));
 
-  const excludeIds = new Set([continueItem?.id, favoriteItem?.id, newItem?.id].filter(Boolean) as string[]);
+  // Sem destaques escolhidos no admin, cai pro mais baixado como único slide.
+  const heroItems =
+    featuredPsds.length > 0
+      ? featuredPsds
+      : [...allPsds].sort((a, b) => b.downloadsCount - a.downloadsCount).slice(0, 1);
+
+  const excludeIds = new Set([continueItem?.id, ...heroItems.map((p) => p.id)].filter(Boolean) as string[]);
   const rest = allPsds.filter((p) => !excludeIds.has(p.id));
   const favoritesCounts = await getFavoritesCounts(supabase, rest.map((p) => p.id));
 
@@ -59,81 +65,36 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted-foreground">Continue de onde parou ou explore novos materiais.</p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card lg:col-span-2">
-          <div className="flex items-center gap-2 border-b border-border px-5 pt-5 sm:px-6 sm:pt-6">
-            <h2 className="text-sm font-semibold text-foreground">Continuar de onde parou</h2>
+      {heroItems.length > 0 && (
+        <HeroCarousel
+          items={heroItems}
+          renderActions={(psd) => (
+            <Link href={`/psd/${psd.slug}`}>
+              <Button variant="accent">
+                <Download className="h-4 w-4" />
+                Ver e baixar
+              </Button>
+            </Link>
+          )}
+        />
+      )}
+
+      {favoritePsds.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">Seus favoritos</h2>
+            <Link
+              href="/favoritos"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Ver tudo
+            </Link>
           </div>
-          {continueItem ? (
-            <PsdFeatureCard
-              psd={continueItem}
-              actions={
-                <>
-                  <RedownloadButton psdId={continueItem.id} variant="accent" label="Baixar novamente" />
-                  <Link href={`/psd/${continueItem.slug}`}>
-                    <Button variant="outline">Mais informações</Button>
-                  </Link>
-                </>
-              }
-            />
-          ) : (
-            <div className="p-5 sm:p-6">
-              <EmptyState
-                icon={<LayoutGrid className="h-6 w-6" />}
-                title="Você ainda não baixou nenhum material"
-                description="Explore a biblioteca e comece a usar seus créditos."
-                action={
-                  <Link href="/psd">
-                    <Button variant="accent">Explorar biblioteca</Button>
-                  </Link>
-                }
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col gap-6">
-          {favoriteItem ? (
-            <PsdCard
-              psd={favoriteItem}
-              isFavorited
-              isLoggedIn
-              availableCredits={availableCredits}
-              topLeftBadge={
-                <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
-                  <Heart className="h-3 w-3 fill-current" />
-                  Favorito
-                </Badge>
-              }
-            />
-          ) : (
-            <EmptyState
-              icon={<Heart className="h-6 w-6" />}
-              title="Sem favoritos ainda"
-              description="Toque no coração de um PSD para salvá-lo aqui."
-              action={
-                <Link href="/psd" className="text-sm font-medium text-accent hover:underline">
-                  Explorar biblioteca
-                </Link>
-              }
-            />
-          )}
-
-          {newItem && (
-            <PsdCard
-              psd={newItem}
-              isLoggedIn
-              availableCredits={availableCredits}
-              topLeftBadge={
-                <Badge variant="accent" className="absolute left-3 top-3 border-0 bg-black/40 backdrop-blur-sm">
-                  <Sparkles className="h-3 w-3" />
-                  Novidade
-                </Badge>
-              }
-            />
-          )}
-        </div>
-      </div>
+          <div className="max-w-xs">
+            <FavoritesCarousel items={favoritePsds} availableCredits={availableCredits} />
+          </div>
+        </section>
+      )}
 
       <PsdRow
         title="Mais baixados"
@@ -177,6 +138,38 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
+
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+        <div className="flex items-center gap-2 border-b border-border px-5 pt-5 sm:px-6 sm:pt-6">
+          <h2 className="text-sm font-semibold text-foreground">Continuar de onde parou</h2>
+        </div>
+        {continueItem ? (
+          <PsdFeatureCard
+            psd={continueItem}
+            actions={
+              <>
+                <RedownloadButton psdId={continueItem.id} variant="accent" label="Baixar novamente" />
+                <Link href={`/psd/${continueItem.slug}`}>
+                  <Button variant="outline">Mais informações</Button>
+                </Link>
+              </>
+            }
+          />
+        ) : (
+          <div className="p-5 sm:p-6">
+            <EmptyState
+              icon={<LayoutGrid className="h-6 w-6" />}
+              title="Você ainda não baixou nenhum material"
+              description="Explore a biblioteca e comece a usar seus créditos."
+              action={
+                <Link href="/psd">
+                  <Button variant="accent">Explorar biblioteca</Button>
+                </Link>
+              }
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

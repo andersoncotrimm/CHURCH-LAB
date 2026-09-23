@@ -266,6 +266,16 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
           />
         </div>
 
+        <Input
+          label="Link do YouTube (opcional)"
+          name="youtube_url"
+          type="url"
+          defaultValue={psd?.youtube_url ?? ""}
+          placeholder="https://www.youtube.com/watch?v=..."
+          hint="Se preenchido, este item vira um slide de vídeo no carrossel de destaques da home, em vez de imagem."
+          disabled={loading}
+        />
+
         <div className="flex items-center gap-6 pt-1">
           <label className="flex items-center gap-2 text-sm text-foreground">
             <input
@@ -275,7 +285,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
               disabled={loading}
               className="h-4 w-4 rounded border-input text-accent focus-visible:ring-2 focus-visible:ring-accent"
             />
-            Destacar na biblioteca
+            Destaque da semana (carrossel da home)
           </label>
 
           <label className="flex items-center gap-2 text-sm text-foreground">
