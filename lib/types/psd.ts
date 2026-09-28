@@ -1,14 +1,31 @@
+export type CardShape = "square" | "vertical" | "horizontal";
+
+export const CARD_SHAPES: { value: CardShape; label: string }[] = [
+  { value: "square", label: "Quadrado" },
+  { value: "vertical", label: "Retangular vertical" },
+  { value: "horizontal", label: "Retangular horizontal" },
+];
+
+/** Proporção (aspect-ratio) do card de PSD pra cada formato — usado na grade pública. */
+export const CARD_SHAPE_ASPECT: Record<CardShape, string> = {
+  square: "aspect-[4/5]",
+  vertical: "aspect-[3/5]",
+  horizontal: "aspect-[5/3]",
+};
+
 export interface Category {
   id: string;
   name: string;
   slug: string;
   description: string | null;
+  card_shape: CardShape;
 }
 
 export interface CategoryFormValues {
   name: string;
   slug: string;
   description: string;
+  card_shape: CardShape;
 }
 
 export interface PsdFile {

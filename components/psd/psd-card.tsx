@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { toggleFavorite } from "@/app/actions/favorites";
 import { PsdDetailModal } from "@/components/psd/psd-detail-modal";
+import { CARD_SHAPE_ASPECT } from "@/lib/types/psd";
 import type { PsdFile } from "@/lib/types/psd";
 
 export interface PsdCardProps {
@@ -25,6 +26,7 @@ function PsdCard({ psd, isFavorited = false, isLoggedIn, availableCredits = null
   const category = psd.categories[0];
   const hasPsd = !!psd.file_path;
   const hasCanva = !!psd.canva_url;
+  const cardShapeAspect = CARD_SHAPE_ASPECT[category?.card_shape ?? "square"];
 
   async function handleFavoriteClick(event: React.MouseEvent) {
     event.stopPropagation();
@@ -44,7 +46,7 @@ function PsdCard({ psd, isFavorited = false, isLoggedIn, availableCredits = null
         onClick={() => setDetailsOpen(true)}
         className="group flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface text-left shadow-card transition-all hover:-translate-y-1 hover:border-accent-300/40 hover:shadow-floating"
       >
-        <div className="relative aspect-[4/5] w-full overflow-hidden bg-muted">
+        <div className={cn("relative w-full overflow-hidden bg-muted", cardShapeAspect)}>
           {psd.thumbnail_url ? (
             <Image
               src={psd.thumbnail_url}

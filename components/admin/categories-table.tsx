@@ -16,7 +16,10 @@ import {
 } from "@/components/ui/table";
 import { CategoryFormModal } from "@/components/admin/category-form-modal";
 import { deleteCategory } from "@/app/admin/categorias/actions";
+import { CARD_SHAPES } from "@/lib/types/psd";
 import type { Category } from "@/lib/types/psd";
+
+const CARD_SHAPE_LABELS = Object.fromEntries(CARD_SHAPES.map((shape) => [shape.value, shape.label]));
 
 export interface CategoryWithCount extends Category {
   psdCount: number;
@@ -97,6 +100,7 @@ export function CategoriesTable({ categories }: { categories: CategoryWithCount[
           <TableHeader>
             <TableRow>
               <TableHead>Categoria</TableHead>
+              <TableHead>Formato do card</TableHead>
               <TableHead>PSDs vinculados</TableHead>
               <TableHead>Ações</TableHead>
             </TableRow>
@@ -108,6 +112,7 @@ export function CategoriesTable({ categories }: { categories: CategoryWithCount[
                   <span className="font-medium">{category.name}</span>
                   <span className="block text-xs text-muted-foreground">/{category.slug}</span>
                 </TableCell>
+                <TableCell className="text-muted-foreground">{CARD_SHAPE_LABELS[category.card_shape]}</TableCell>
                 <TableCell className="text-muted-foreground">{category.psdCount}</TableCell>
                 <TableCell>
                   <div className="flex items-center gap-1.5">

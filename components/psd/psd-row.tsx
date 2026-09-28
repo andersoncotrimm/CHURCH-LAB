@@ -37,7 +37,7 @@ export function PsdRow({
           </Link>
         )}
       </div>
-      <div className="no-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
+      <div className="no-scrollbar -mx-4 flex items-start gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6">
         {psds.map((psd) => (
           <div key={psd.id} className="w-36 shrink-0 sm:w-44">
             <PsdCard

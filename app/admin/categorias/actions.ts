@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { CARD_SHAPES } from "@/lib/types/psd";
 import type { CategoryFormValues } from "@/lib/types/psd";
 
 export interface ActionResult {
@@ -12,6 +13,7 @@ function parseCategoryForm(formData: FormData): { values: CategoryFormValues } |
   const name = String(formData.get("name") ?? "").trim();
   const slug = String(formData.get("slug") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const cardShapeRaw = String(formData.get("card_shape") ?? "square");
 
   if (!name) return { error: "Nome é obrigatório." };
 
@@ -19,7 +21,11 @@ function parseCategoryForm(formData: FormData): { values: CategoryFormValues } |
     return { error: "Slug inválido. Use apenas letras minúsculas, números e hífens." };
   }
 
-  return { values: { name, slug, description } };
+  const cardShape = CARD_SHAPES.some((shape) => shape.value === cardShapeRaw)
+    ? (cardShapeRaw as CategoryFormValues["card_shape"])
+    : "square";
+
+  return { values: { name, slug, description, card_shape: cardShape } };
 }
 
 function translateSupabaseError(error: { message: string; code?: string }): string {
@@ -41,6 +47,7 @@ export async function createCategory(formData: FormData): Promise<ActionResult> 
     name: parsed.values.name,
     slug: parsed.values.slug,
     description: parsed.values.description || null,
+    card_shape: parsed.values.card_shape,
   });
 
   if (error) return { error: translateSupabaseError(error) };
@@ -62,6 +69,7 @@ export async function updateCategory(id: string, formData: FormData): Promise<Ac
       name: parsed.values.name,
       slug: parsed.values.slug,
       description: parsed.values.description || null,
+      card_shape: parsed.values.card_shape,
     })
     .eq("id", id);
 
