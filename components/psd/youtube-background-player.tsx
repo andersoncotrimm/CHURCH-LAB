@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 
 // A API do YouTube não tem tipos oficiais aqui (carregada via <script>
 // externo, não é um pacote instalado) — `any` é proposital.
@@ -10,13 +11,25 @@ declare global {
       Player: new (
         elementId: string,
         options: Record<string, unknown>
-      ) => {
-        destroy: () => void;
-        getIframe: () => HTMLIFrameElement;
+      ) => YtPlayer;
+      PlayerState: {
+        ENDED: number;
+        PLAYING: number;
+        PAUSED: number;
+        UNSTARTED: number;
+        CUED: number;
       };
     };
     onYouTubeIframeAPIReady?: () => void;
   }
+}
+
+interface YtPlayer {
+  destroy: () => void;
+  getIframe: () => HTMLIFrameElement;
+  getDuration: () => number;
+  seekTo: (s: number, allow: boolean) => void;
+  playVideo: () => void;
 }
 
 /** O player da API substitui a div pelo iframe com width/height fixos por padrão — força ele a preencher o container via CSS, sem cortar o vídeo. */
@@ -26,6 +39,7 @@ function fillContainer(iframe: HTMLIFrameElement) {
   iframe.style.width = "100%";
   iframe.style.height = "100%";
   iframe.style.border = "0";
+  iframe.style.pointerEvents = "none";
 }
 
 let apiLoadPromise: Promise<void> | null = null;
@@ -55,19 +69,36 @@ function loadYoutubeIframeApi(): Promise<void> {
  * sem permitir pausar/avançar/clicar pra abrir no YouTube — pra parecer
  * um player nativo da plataforma. Começa em 5% da duração do vídeo (em
  * vez do início) e fica em loop, mudo (autoplay no navegador exige mudo).
+ *
+ * O YouTube mostra um cartão próprio (título, canal, sugestões, logo)
+ * sempre que o vídeo não está tocando — controls=0 só esconde a barra de
+ * controles, não esse cartão. Como não dá pra estilizar por dentro do
+ * iframe (cross-origin), a defesa é: nunca deixar ele parar (relança
+ * playVideo() em qualquer estado que não seja "tocando") e manter o
+ * iframe invisível (mostrando a capa por baixo) até confirmar que está
+ * tocando de verdade.
  */
-export function YoutubeBackgroundPlayer({ videoId }: { videoId: string }) {
+export function YoutubeBackgroundPlayer({ videoId, posterUrl }: { videoId: string; posterUrl?: string | null }) {
   const reactId = React.useId().replace(/[^a-zA-Z0-9]/g, "");
   const containerId = `yt-player-${reactId}`;
+  const [playing, setPlaying] = React.useState(false);
 
   React.useEffect(() => {
     let cancelled = false;
-    let player: { destroy: () => void; getIframe: () => HTMLIFrameElement } | null = null;
+    let player: YtPlayer | null = null;
 
     loadYoutubeIframeApi().then(() => {
       if (cancelled || !window.YT) return;
 
-      player = new window.YT.Player(containerId, {
+      const YT = window.YT;
+
+      function resumePlayback(target: YtPlayer) {
+        const duration = target.getDuration();
+        if (duration > 0) target.seekTo(duration * 0.05, true);
+        target.playVideo();
+      }
+
+      player = new YT.Player(containerId, {
         videoId,
         width: "100%",
         height: "100%",
@@ -86,22 +117,28 @@ export function YoutubeBackgroundPlayer({ videoId }: { videoId: string }) {
           origin: window.location.origin,
         },
         events: {
-          onReady: (event: {
-            target: {
-              getDuration: () => number;
-              seekTo: (s: number, allow: boolean) => void;
-              playVideo: () => void;
-              getIframe: () => HTMLIFrameElement;
-            };
-          }) => {
+          onReady: (event: { target: YtPlayer }) => {
             fillContainer(event.target.getIframe());
-            const duration = event.target.getDuration();
-            if (duration > 0) event.target.seekTo(duration * 0.05, true);
-            event.target.playVideo();
+            resumePlayback(event.target);
+          },
+          onStateChange: (event: { data: number; target: YtPlayer }) => {
+            if (cancelled) return;
+            if (event.data === YT.PlayerState.PLAYING) {
+              setPlaying(true);
+              return;
+            }
+            // Qualquer coisa que não seja "tocando" (pausado, encerrado,
+            // não iniciado) é onde o YouTube mostra o cartão com
+            // título/canal/sugestões — relança na hora pra nunca aparecer.
+            setPlaying(false);
+            if (event.data === YT.PlayerState.ENDED) {
+              resumePlayback(event.target);
+            } else if (event.data === YT.PlayerState.PAUSED || event.data === YT.PlayerState.CUED) {
+              event.target.playVideo();
+            }
           },
         },
       });
-      fillContainer(player.getIframe());
     });
 
     return () => {
@@ -115,8 +152,21 @@ export function YoutubeBackgroundPlayer({ videoId }: { videoId: string }) {
     // Sem crop: o player preenche exatamente o container, então o
     // YouTube encaixa o vídeo inteiro sozinho (tarja preta nas bordas se
     // a proporção não bater), em vez de cortar as laterais/topo do vídeo.
-    <div className="pointer-events-none absolute inset-0 bg-black">
-      <div id={containerId} className="absolute inset-0 h-full w-full" />
+    <div className="pointer-events-none absolute inset-0 overflow-hidden bg-black">
+      {posterUrl && (
+        <Image
+          src={posterUrl}
+          alt=""
+          fill
+          sizes="100vw"
+          className={`object-cover transition-opacity duration-500 ${playing ? "opacity-0" : "opacity-100"}`}
+          priority
+        />
+      )}
+      <div
+        id={containerId}
+        className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${playing ? "opacity-100" : "opacity-0"}`}
+      />
     </div>
   );
 }

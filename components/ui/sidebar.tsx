@@ -215,14 +215,21 @@ function Sidebar({ items, brand, brandCompact, footer, mobileOpen, onMobileClose
         cabeçalho — só o painel de navegação abaixo dela expande (flutua
         por cima do conteúdo, sem empurrar a página) ao passar o mouse.
       */}
-      <div className="group/rail sticky top-0 hidden h-screen w-[76px] shrink-0 lg:block">
-        <div className="flex h-16 items-center justify-center border-b border-r border-border bg-surface/70 backdrop-blur-xl">
+      {/*
+        `sticky` sempre cria seu próprio contexto de empilhamento (mesmo
+        sem z-index), então sem um z-index explícito aqui essa trilha
+        inteira (marca + painel expansível) fica presa nesse contexto e
+        perde pra `main` (que vem depois no DOM) na comparação externa —
+        era isso que fazia o menu abrir por baixo dos cards.
+      */}
+      <div className="group/rail sticky top-0 z-40 hidden h-screen w-[76px] shrink-0 lg:block">
+        <div className="glass-panel flex h-16 items-center justify-center border-b border-r border-border">
           {brandCompact ?? brand}
         </div>
 
         <div
           className={cn(
-            "absolute left-0 top-16 z-40 flex h-[calc(100%-4rem)] w-[76px] flex-col overflow-hidden border-r border-border bg-surface/70 backdrop-blur-xl",
+            "glass-panel absolute left-0 top-16 z-40 flex h-[calc(100%-4rem)] w-[76px] flex-col overflow-hidden border-r border-border",
             "transition-[width,box-shadow] duration-200 ease-out",
             "group-hover/rail:w-64 group-hover/rail:shadow-floating"
           )}
@@ -249,7 +256,7 @@ function Sidebar({ items, brand, brandCompact, footer, mobileOpen, onMobileClose
             className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-sm"
             onClick={onMobileClose}
           />
-          <div className="relative z-10 flex h-full w-64 animate-scale-in flex-col border-r border-border bg-surface/85 backdrop-blur-xl">
+          <div className="glass-panel relative z-10 flex h-full w-64 animate-scale-in flex-col border-r border-border">
             <div className="flex items-center justify-between px-5 py-5">
               {brand}
               <button

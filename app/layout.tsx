@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/utils/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
-import { hexToHslTriple, shiftLightness, contrastingForeground } from "@/lib/color";
+import { hexToHslTriple, shiftLightness, contrastingForeground, buildAccentScale } from "@/lib/color";
 import { SiteSettingsProvider } from "@/components/brand/site-settings-provider";
 
 const inter = Inter({
@@ -38,8 +38,26 @@ export default async function RootLayout({
 
   const background = hexToHslTriple(settings.backgroundColor);
   const accent = hexToHslTriple(settings.buttonColor);
+  const accentScale = buildAccentScale(accent);
+  const accentScaleVars = Object.entries(accentScale)
+    .map(([stop, value]) => `--accent-${stop}:${value};`)
+    .join("");
 
-  const themeOverrides = `:root{--background:${background};--surface:${shiftLightness(background, 5)};--muted:${shiftLightness(background, 11)};--border:${shiftLightness(background, 15)};--input:${shiftLightness(background, 17)};--accent:${accent};--accent-2:${shiftLightness(accent, -9)};--ring:${accent};--accent-foreground:${contrastingForeground(settings.buttonColor)};}`;
+  const themeOverrides = `:root{--background:${background};--surface:${shiftLightness(background, 5)};--muted:${shiftLightness(background, 11)};--border:${shiftLightness(background, 15)};--input:${shiftLightness(background, 17)};--accent:${accent};--accent-2:${shiftLightness(accent, -9)};--ring:${accent};--accent-foreground:${contrastingForeground(settings.buttonColor)};${accentScaleVars}}`;
+
+  // Vidro (barra lateral/cabeçalho): tom claro ou escuro + transparência,
+  // ambos configuráveis em /admin/configuracoes. `.glass-root` (o painel
+  // que ocupa a tela toda) fica mais opaco de propósito — nada de blur
+  // nele, que é caro demais numa área do tamanho da viewport inteira e
+  // atrasa a primeira pintura da página; só `.glass-panel` (sidebar e
+  // cabeçalho, áreas pequenas) usa backdrop-blur de verdade.
+  const glassRgb = settings.glassTint === "light" ? "255 255 255" : "0 0 0";
+  const glassAlpha = Math.max(0, Math.min(100, settings.glassOpacity)) / 100;
+  const glassRootAlpha = Math.min(0.97, glassAlpha + 0.25);
+  const glassStyles =
+    `:root{--glass-rgb:${glassRgb};--glass-alpha:${glassAlpha};--glass-root-alpha:${glassRootAlpha};}` +
+    `.glass-panel{background-color:rgb(var(--glass-rgb) / var(--glass-alpha));backdrop-filter:blur(28px);-webkit-backdrop-filter:blur(28px);}` +
+    `.glass-root{background-color:rgb(var(--glass-rgb) / var(--glass-root-alpha));}`;
 
   // Imagem de fundo fixa (por formato de tela), atrás de tudo — a sidebar
   // e o header ficam com efeito de vidro (blur) por cima dela.
@@ -59,7 +77,10 @@ export default async function RootLayout({
   return (
     <html lang="pt-BR" className={inter.variable}>
       <head>
-        <style id="site-theme" dangerouslySetInnerHTML={{ __html: themeOverrides + backgroundStyles }} />
+        <style
+          id="site-theme"
+          dangerouslySetInnerHTML={{ __html: themeOverrides + glassStyles + backgroundStyles }}
+        />
       </head>
       <body className="min-h-screen font-sans">
         {hasBackgroundImage && <div className="site-bg fixed inset-0 -z-10" aria-hidden="true" />}

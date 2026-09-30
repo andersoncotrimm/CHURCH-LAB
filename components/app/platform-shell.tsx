@@ -45,7 +45,7 @@ export function PlatformShell({ user, planName, credits, categories = [], isAdmi
   }
 
   return (
-    <div className="isolate flex min-h-screen bg-background/80 backdrop-blur-2xl">
+    <div className="glass-root isolate flex min-h-screen">
       <Sidebar
         items={items}
         brand={

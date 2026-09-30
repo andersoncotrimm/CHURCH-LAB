@@ -18,6 +18,8 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
   const backgroundImageMobileUrl = String(formData.get("background_image_mobile_url") ?? "").trim();
   const backgroundImageTabletUrl = String(formData.get("background_image_tablet_url") ?? "").trim();
   const backgroundImageDesktopUrl = String(formData.get("background_image_desktop_url") ?? "").trim();
+  const glassOpacityRaw = String(formData.get("glass_opacity") ?? "").trim();
+  const glassTint = String(formData.get("glass_tint") ?? "dark").trim();
 
   if (!siteName) return { error: "O nome da plataforma é obrigatório." };
   if (siteName.length > 40) return { error: "Nome muito longo (máx. 40 caracteres)." };
@@ -31,6 +33,14 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
 
   if (referencePinterestUrl && !/^https:\/\/(www\.)?pinterest\./.test(referencePinterestUrl)) {
     return { error: "Link do Pinterest inválido — precisa começar com https://pinterest.com/ ou https://www.pinterest.com/" };
+  }
+
+  const glassOpacity = Number(glassOpacityRaw);
+  if (!Number.isInteger(glassOpacity) || glassOpacity < 0 || glassOpacity > 100) {
+    return { error: "Transparência do vidro inválida (use um número entre 0 e 100)." };
+  }
+  if (glassTint !== "dark" && glassTint !== "light") {
+    return { error: "Tom do vidro inválido." };
   }
 
   const supabase = await createClient();
@@ -50,6 +60,8 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
       background_image_desktop_url: backgroundImageSameForAll
         ? backgroundImageMobileUrl || null
         : backgroundImageDesktopUrl || null,
+      glass_opacity: glassOpacity,
+      glass_tint: glassTint,
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);

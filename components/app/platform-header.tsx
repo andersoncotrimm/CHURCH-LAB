@@ -27,7 +27,7 @@ function PlatformHeader({
   return (
     <header
       className={cn(
-        "sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-surface/80 px-4 backdrop-blur-md sm:px-6",
+        "glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border px-4 sm:px-6",
         className
       )}
     >

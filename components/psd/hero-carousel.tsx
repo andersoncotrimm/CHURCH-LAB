@@ -43,7 +43,11 @@ export function HeroCarousel({ items, variant, intervalSeconds = 7 }: HeroCarous
     <div className="relative overflow-hidden rounded-2xl border border-border bg-surface shadow-elevated">
       <div className="relative aspect-[4/5] w-full sm:aspect-[16/9] lg:aspect-[21/9]">
         {videoId ? (
-          <YoutubeBackgroundPlayer key={psd.id} videoId={videoId} />
+          <YoutubeBackgroundPlayer
+            key={psd.id}
+            videoId={videoId}
+            posterUrl={psd.preview_url ?? psd.thumbnail_url}
+          />
         ) : psd.preview_url || psd.thumbnail_url ? (
           <Image
             key={psd.id}

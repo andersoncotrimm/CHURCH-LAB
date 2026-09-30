@@ -88,6 +88,8 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [carouselInterval, setCarouselInterval] = React.useState(settings.carouselIntervalSeconds);
   const [referencePinterestUrl, setReferencePinterestUrl] = React.useState(settings.referencePinterestUrl ?? "");
   const [sameForAll, setSameForAll] = React.useState(settings.backgroundImageSameForAll);
+  const [glassOpacity, setGlassOpacity] = React.useState(settings.glassOpacity);
+  const [glassTint, setGlassTint] = React.useState<"dark" | "light">(settings.glassTint);
   const [mobileFile, setMobileFile] = React.useState<File | null>(null);
   const [tabletFile, setTabletFile] = React.useState<File | null>(null);
   const [desktopFile, setDesktopFile] = React.useState<File | null>(null);
@@ -259,6 +261,67 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
             />
           </>
         )}
+      </div>
+
+      <div className="space-y-4 rounded-lg border border-border p-4">
+        <div>
+          <p className="text-sm font-medium text-foreground">Vidro (barra lateral e cabeçalho)</p>
+          <p className="text-xs text-muted-foreground">
+            Controla o quanto a barra lateral e o cabeçalho ficam transparentes sobre a imagem de fundo, e se o
+            vidro é escuro ou claro.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="flex items-center justify-between text-sm font-medium text-foreground">
+            Transparência
+            <span className="text-xs font-normal text-muted-foreground">{glassOpacity}% opaco</span>
+          </label>
+          <input
+            type="range"
+            name="glass_opacity"
+            min={0}
+            max={100}
+            value={glassOpacity}
+            onChange={(event) => setGlassOpacity(Number(event.target.value))}
+            disabled={loading}
+            className="range-slider-thumb h-2 w-full cursor-pointer appearance-none rounded-full bg-muted"
+          />
+          <p className="text-xs text-muted-foreground">
+            Mais pra esquerda = mais transparente (vidro), mais pra direita = mais sólido.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-foreground">Tom do vidro</span>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setGlassTint("dark")}
+              disabled={loading}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                glassTint === "dark"
+                  ? "border-accent bg-accent/10 text-foreground"
+                  : "border-input text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Escuro
+            </button>
+            <button
+              type="button"
+              onClick={() => setGlassTint("light")}
+              disabled={loading}
+              className={`flex-1 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                glassTint === "light"
+                  ? "border-accent bg-accent/10 text-foreground"
+                  : "border-input text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              Claro
+            </button>
+          </div>
+          <input type="hidden" name="glass_tint" value={glassTint} />
+        </div>
       </div>
 
       <div>

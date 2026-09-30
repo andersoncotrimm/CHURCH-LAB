@@ -10,6 +10,10 @@ export interface SiteSettings {
   backgroundImageTabletUrl: string | null;
   backgroundImageDesktopUrl: string | null;
   backgroundImageSameForAll: boolean;
+  /** 0 (totalmente transparente) a 100 (opaco) — transparência do "vidro" da sidebar/cabeçalho. */
+  glassOpacity: number;
+  /** Tom do vidro: escuro (padrão) ou claro. */
+  glassTint: "dark" | "light";
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -22,6 +26,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   backgroundImageTabletUrl: null,
   backgroundImageDesktopUrl: null,
   backgroundImageSameForAll: true,
+  glassOpacity: 70,
+  glassTint: "dark",
 };
 
 /** Config global do site (nome, cores, carrossel, referências, fundo). Degrada para o padrão em qualquer falha. */
@@ -30,7 +36,7 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
     const { data, error } = await supabase
       .from("site_settings")
       .select(
-        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all"
+        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all, glass_opacity, glass_tint"
       )
       .eq("id", true)
       .maybeSingle();
@@ -47,6 +53,8 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
       backgroundImageTabletUrl: data.background_image_tablet_url || null,
       backgroundImageDesktopUrl: data.background_image_desktop_url || null,
       backgroundImageSameForAll: data.background_image_same_for_all ?? true,
+      glassOpacity: data.glass_opacity ?? DEFAULT_SETTINGS.glassOpacity,
+      glassTint: data.glass_tint === "light" ? "light" : "dark",
     };
   } catch {
     return DEFAULT_SETTINGS;

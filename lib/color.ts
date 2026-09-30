@@ -55,3 +55,31 @@ export function contrastingForeground(hex: string): string {
 export function isValidHex(value: string): boolean {
   return /^#[a-f\d]{6}$/i.test(value.trim());
 }
+
+/**
+ * Escala 50-900 (fundos sutis de item ativo -> texto vibrante sobre fundo
+ * escuro) derivada da cor de destaque escolhida em /admin/configuracoes —
+ * mantém o matiz/saturação da cor base, variando só a luminosidade, nos
+ * mesmos pontos da antiga escala vermelha fixa que ela substitui.
+ */
+const ACCENT_SCALE_LIGHTNESS: Record<string, number> = {
+  "50": 10,
+  "100": 14,
+  "200": 20,
+  "300": 28,
+  "400": 38,
+  "500": 44,
+  "600": 47,
+  "700": 58,
+  "800": 72,
+  "900": 88,
+};
+
+export function buildAccentScale(hslTriple: string): Record<string, string> {
+  const [h, s] = hslTriple.split(" ");
+  const scale: Record<string, string> = {};
+  for (const [stop, lightness] of Object.entries(ACCENT_SCALE_LIGHTNESS)) {
+    scale[stop] = `${h} ${s} ${lightness}%`;
+  }
+  return scale;
+}

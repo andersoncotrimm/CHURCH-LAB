@@ -36,17 +36,18 @@ const config: Config = {
           // Escala pensada para fundo ESCURO: números baixos = tons
           // escuros/sutis (fundos de badge, item ativo do menu); números
           // altos = tons claros/vibrantes (texto sobre fundo escuro).
-          // Vermelho vívido no tom Netflix (~#E50914), não rosa.
-          50: "#280b0d",
-          100: "#371012",
-          200: "#521417",
-          300: "#79151a",
-          400: "#ae131b",
-          500: "#d30d17",
-          600: "#e60a15",
-          700: "#f4343d",
-          800: "#f47b81",
-          900: "#f9c8ca",
+          // Derivada em runtime da cor escolhida em /admin/configuracoes
+          // (app/layout.tsx injeta --accent-50..900) — nunca fixa.
+          50: "hsl(var(--accent-50))",
+          100: "hsl(var(--accent-100))",
+          200: "hsl(var(--accent-200))",
+          300: "hsl(var(--accent-300))",
+          400: "hsl(var(--accent-400))",
+          500: "hsl(var(--accent-500))",
+          600: "hsl(var(--accent-600))",
+          700: "hsl(var(--accent-700))",
+          800: "hsl(var(--accent-800))",
+          900: "hsl(var(--accent-900))",
         },
         cyan: {
           DEFAULT: "hsl(var(--cyan))",
