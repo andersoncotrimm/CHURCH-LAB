@@ -78,7 +78,7 @@
    */
   html {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--accent) / 0.55) transparent;
+    scrollbar-color: hsl(var(--accent) / 0.55) hsl(var(--background));
   }
 
   ::-webkit-scrollbar {
@@ -87,7 +87,10 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    /* Trilha "transparent" cai no cinza/branco padrão do navegador em
+       vez de deixar o fundo escuro do site aparecer — usa a cor de
+       fundo do site (--background) explicitamente. */
+    background: hsl(var(--background));
   }
 
   ::-webkit-scrollbar-thumb {
