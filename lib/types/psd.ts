@@ -76,3 +76,15 @@ export const CONTENT_TYPES: { value: ContentType; label: string }[] = [
   { value: "ferramentas", label: "Ferramentas" },
   { value: "sistemas", label: "Sistemas" },
 ];
+
+/** Cor de identidade por tipo de conteúdo — molda/selo do card estilo "trading card", uma cor por tipo (como raridade). */
+export const CONTENT_TYPE_COLOR: Record<
+  ContentType,
+  { border: string; badgeBg: string; badgeText: string; statText: string }
+> = {
+  psd: { border: "border-accent/70", badgeBg: "bg-accent", badgeText: "text-accent-foreground", statText: "text-accent" },
+  elementos: { border: "border-cyan/70", badgeBg: "bg-cyan", badgeText: "text-cyan-foreground", statText: "text-cyan" },
+  plugins: { border: "border-success/70", badgeBg: "bg-success", badgeText: "text-success-foreground", statText: "text-success" },
+  ferramentas: { border: "border-warning/70", badgeBg: "bg-warning", badgeText: "text-warning-foreground", statText: "text-warning" },
+  sistemas: { border: "border-danger/70", badgeBg: "bg-danger", badgeText: "text-danger-foreground", statText: "text-danger" },
+};
