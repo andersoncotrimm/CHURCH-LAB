@@ -26,7 +26,7 @@ function PsdCard({ psd, isFavorited = false, isLoggedIn, availableCredits = null
   const category = psd.categories[0];
   const hasPsd = !!psd.file_path;
   const hasCanva = !!psd.canva_url;
-  const cardShapeAspect = CARD_SHAPE_ASPECT[category?.card_shape ?? "square"];
+  const cardShapeAspect = CARD_SHAPE_ASPECT[psd.card_orientation ?? category?.card_shape ?? "square"];
 
   async function handleFavoriteClick(event: React.MouseEvent) {
     event.stopPropagation();

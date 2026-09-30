@@ -1,5 +1,8 @@
 export type CardShape = "square" | "vertical" | "horizontal";
 
+/** Formato do card no nível do PSD (não da categoria) — ex. "cards de telão" (horizontais) misturados numa categoria de outro formato. `null` = usa o formato da categoria. */
+export type CardOrientation = "vertical" | "horizontal";
+
 export const CARD_SHAPES: { value: CardShape; label: string }[] = [
   { value: "square", label: "Quadrado" },
   { value: "vertical", label: "Retangular vertical" },
@@ -46,6 +49,7 @@ export interface PsdFile {
   is_published: boolean;
   is_featured: boolean;
   content_type: ContentType;
+  card_orientation: CardOrientation | null;
   created_at: string;
   updated_at: string;
   categories: Category[];

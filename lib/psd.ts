@@ -19,6 +19,7 @@ export interface PsdFileRow {
   is_published: boolean;
   is_featured: boolean;
   content_type: ContentType;
+  card_orientation: PsdFile["card_orientation"];
   created_at: string;
   updated_at: string;
   psd_categories: { categories: Category | null }[] | null;

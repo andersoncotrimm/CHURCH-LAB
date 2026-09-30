@@ -5,7 +5,7 @@ import { createClient } from "@/utils/supabase/server";
 import { slugify } from "@/lib/slugify";
 import { notifyIfEnabled } from "@/lib/notifications";
 import { CONTENT_TYPES } from "@/lib/types/psd";
-import type { ContentType } from "@/lib/types/psd";
+import type { ContentType, CardOrientation } from "@/lib/types/psd";
 
 export interface ActionResult {
   error?: string;
@@ -29,6 +29,7 @@ interface PsdFields {
   is_published: boolean;
   is_featured: boolean;
   content_type: ContentType;
+  card_orientation: CardOrientation | null;
   category_ids: string[];
   thumbnail_url: string;
   preview_url: string;
@@ -57,6 +58,10 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
   const contentType = CONTENT_TYPES.some((type) => type.value === contentTypeRaw)
     ? (contentTypeRaw as ContentType)
     : "psd";
+
+  const cardOrientationRaw = String(formData.get("card_orientation") ?? "");
+  const cardOrientation: CardOrientation | null =
+    cardOrientationRaw === "vertical" || cardOrientationRaw === "horizontal" ? cardOrientationRaw : null;
 
   const creditCostRaw = String(formData.get("credit_cost") ?? "");
   const creditCostParsed = Number(creditCostRaw);
@@ -87,6 +92,7 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
       is_published: isPublished,
       is_featured: isFeatured,
       content_type: contentType,
+      card_orientation: cardOrientation,
       category_ids: categoryIds,
       thumbnail_url: String(formData.get("thumbnail_url") ?? "").trim(),
       preview_url: String(formData.get("preview_url") ?? "").trim(),
@@ -180,6 +186,7 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
       is_published: v.is_published,
       is_featured: v.is_featured,
       content_type: v.content_type,
+      card_orientation: v.card_orientation,
     })
     .select("id")
     .single();
@@ -226,6 +233,7 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
       is_published: v.is_published,
       is_featured: v.is_featured,
       content_type: v.content_type,
+      card_orientation: v.card_orientation,
     })
     .eq("id", id);
 

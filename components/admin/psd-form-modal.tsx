@@ -8,9 +8,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { slugify } from "@/lib/slugify";
 import { createClient } from "@/utils/supabase/client";
+import { cn } from "@/lib/utils";
 import { createPsd, updatePsd } from "@/app/admin/psd/actions";
 import { CONTENT_TYPES } from "@/lib/types/psd";
-import type { Category, PsdFile } from "@/lib/types/psd";
+import type { Category, PsdFile, CardOrientation } from "@/lib/types/psd";
+
+const CARD_ORIENTATION_OPTIONS: { value: CardOrientation | ""; label: string; hint: string }[] = [
+  { value: "", label: "Padrão da categoria", hint: "Segue o formato configurado na categoria" },
+  { value: "vertical", label: "Vertical", hint: "Card retangular em pé" },
+  { value: "horizontal", label: "Horizontal (telão)", hint: "Card retangular deitado, tipo slide de projeção" },
+];
 
 export interface PsdFormModalProps {
   open: boolean;
@@ -36,6 +43,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
   const [selectedCategoryIds, setSelectedCategoryIds] = React.useState<Set<string>>(
     new Set(psd?.categories.map((c) => c.id) ?? [])
   );
+  const [cardOrientation, setCardOrientation] = React.useState<CardOrientation | "">(psd?.card_orientation ?? "");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -44,6 +52,7 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
       setSlug(psd?.slug ?? "");
       setSlugTouched(!!psd);
       setSelectedCategoryIds(new Set(psd?.categories.map((c) => c.id) ?? []));
+      setCardOrientation(psd?.card_orientation ?? "");
       setError(null);
     }
   }, [open, psd]);
@@ -238,6 +247,34 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
           hint="Mostrado no card de detalhes quando o material for um carrossel."
           disabled={loading}
         />
+
+        <div>
+          <p className="mb-1.5 text-sm font-medium text-foreground">Formato do card</p>
+          <p className="mb-2 text-xs text-muted-foreground">
+            Sobrescreve o formato da categoria só pra este item — use pra cards de telão (horizontais) misturados
+            numa categoria de outro formato.
+          </p>
+          <input type="hidden" name="card_orientation" value={cardOrientation} />
+          <div className="grid grid-cols-3 gap-2">
+            {CARD_ORIENTATION_OPTIONS.map((option) => (
+              <button
+                key={option.value || "default"}
+                type="button"
+                onClick={() => setCardOrientation(option.value)}
+                disabled={loading}
+                title={option.hint}
+                className={cn(
+                  "rounded-lg border p-2.5 text-center text-[11px] font-medium leading-tight transition-colors",
+                  cardOrientation === option.value
+                    ? "border-accent bg-accent-50 text-accent-700"
+                    : "border-border text-muted-foreground hover:bg-muted"
+                )}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div>
           <p className="mb-1.5 text-sm font-medium text-foreground">Categorias (opcional)</p>
