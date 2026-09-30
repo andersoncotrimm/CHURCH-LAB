@@ -80,11 +80,41 @@ export const CONTENT_TYPES: { value: ContentType; label: string }[] = [
 /** Cor de identidade por tipo de conteúdo — molda/selo do card estilo "trading card", uma cor por tipo (como raridade). */
 export const CONTENT_TYPE_COLOR: Record<
   ContentType,
-  { border: string; badgeBg: string; badgeText: string; statText: string }
+  { border: string; badgeBg: string; badgeText: string; statText: string; gradient: string }
 > = {
-  psd: { border: "border-accent/70", badgeBg: "bg-accent", badgeText: "text-accent-foreground", statText: "text-accent" },
-  elementos: { border: "border-cyan/70", badgeBg: "bg-cyan", badgeText: "text-cyan-foreground", statText: "text-cyan" },
-  plugins: { border: "border-success/70", badgeBg: "bg-success", badgeText: "text-success-foreground", statText: "text-success" },
-  ferramentas: { border: "border-warning/70", badgeBg: "bg-warning", badgeText: "text-warning-foreground", statText: "text-warning" },
-  sistemas: { border: "border-danger/70", badgeBg: "bg-danger", badgeText: "text-danger-foreground", statText: "text-danger" },
+  psd: {
+    border: "border-accent",
+    badgeBg: "bg-accent",
+    badgeText: "text-accent-foreground",
+    statText: "text-accent",
+    gradient: "from-accent via-accent/70 to-background",
+  },
+  elementos: {
+    border: "border-cyan",
+    badgeBg: "bg-cyan",
+    badgeText: "text-cyan-foreground",
+    statText: "text-cyan",
+    gradient: "from-cyan via-cyan/70 to-background",
+  },
+  plugins: {
+    border: "border-success",
+    badgeBg: "bg-success",
+    badgeText: "text-success-foreground",
+    statText: "text-success",
+    gradient: "from-success via-success/70 to-background",
+  },
+  ferramentas: {
+    border: "border-warning",
+    badgeBg: "bg-warning",
+    badgeText: "text-warning-foreground",
+    statText: "text-warning",
+    gradient: "from-warning via-warning/70 to-background",
+  },
+  sistemas: {
+    border: "border-danger",
+    badgeBg: "bg-danger",
+    badgeText: "text-danger-foreground",
+    statText: "text-danger",
+    gradient: "from-danger via-danger/70 to-background",
+  },
 };
