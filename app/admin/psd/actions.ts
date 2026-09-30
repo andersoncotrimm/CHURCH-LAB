@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { slugify } from "@/lib/slugify";
+import { notifyIfEnabled } from "@/lib/notifications";
 import { CONTENT_TYPES } from "@/lib/types/psd";
 import type { ContentType } from "@/lib/types/psd";
 
@@ -136,6 +137,23 @@ function revalidateLibraryPaths(slug?: string) {
   revalidatePath("/dashboard");
 }
 
+/**
+ * Mensagem da notificação de "novo arquivo" — nunca o nome do arquivo
+ * (pedido explícito do admin), só o tipo/categoria dele.
+ */
+async function buildNewFileMessage(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  categoryIds: string[],
+  contentType: ContentType
+): Promise<string> {
+  if (categoryIds.length > 0) {
+    const { data } = await supabase.from("categories").select("name").eq("id", categoryIds[0]).maybeSingle();
+    if (data?.name) return `Novo arquivo adicionado em ${data.name}.`;
+  }
+  const label = CONTENT_TYPES.find((type) => type.value === contentType)?.label ?? "material";
+  return `Novo arquivo de ${label} adicionado.`;
+}
+
 export async function createPsd(formData: FormData): Promise<ActionResult> {
   const parsed = parsePsdForm(formData);
   if ("error" in parsed) return { error: parsed.error };
@@ -172,6 +190,11 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
 
   const linkResult = await syncCategoryLinks(supabase, inserted.id, v.category_ids);
   if (linkResult.error) return linkResult;
+
+  if (v.is_published) {
+    const message = await buildNewFileMessage(supabase, v.category_ids, v.content_type);
+    await notifyIfEnabled(supabase, "new_file", message);
+  }
 
   revalidateLibraryPaths(v.slug);
   return {};

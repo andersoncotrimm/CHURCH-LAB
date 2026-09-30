@@ -223,13 +223,13 @@ function Sidebar({ items, brand, brandCompact, footer, mobileOpen, onMobileClose
         era isso que fazia o menu abrir por baixo dos cards.
       */}
       <div className="group/rail sticky top-0 z-40 hidden h-screen w-[76px] shrink-0 lg:block">
-        <div className="glass-panel flex h-16 items-center justify-center border-b border-r border-border">
+        <div className="glass-panel flex h-16 items-center justify-center">
           {brandCompact ?? brand}
         </div>
 
         <div
           className={cn(
-            "glass-panel absolute left-0 top-16 z-40 flex h-[calc(100%-4rem)] w-[76px] flex-col overflow-hidden border-r border-border",
+            "glass-panel absolute left-0 top-16 z-40 flex h-[calc(100%-4rem)] w-[76px] flex-col overflow-hidden",
             "transition-[width,box-shadow] duration-200 ease-out",
             "group-hover/rail:w-64 group-hover/rail:shadow-floating"
           )}
@@ -256,7 +256,7 @@ function Sidebar({ items, brand, brandCompact, footer, mobileOpen, onMobileClose
             className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-sm"
             onClick={onMobileClose}
           />
-          <div className="glass-panel relative z-10 flex h-full w-64 animate-scale-in flex-col border-r border-border">
+          <div className="glass-panel relative z-10 flex h-full w-64 animate-scale-in flex-col">
             <div className="flex items-center justify-between px-5 py-5">
               {brand}
               <button

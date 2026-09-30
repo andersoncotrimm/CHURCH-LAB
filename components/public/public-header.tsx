@@ -14,7 +14,7 @@ function PublicHeader({ onMenuClick, className }: PublicHeaderProps) {
   return (
     <header
       className={cn(
-        "glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border px-4 sm:px-6",
+        "glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 px-4 sm:px-6",
         className
       )}
     >

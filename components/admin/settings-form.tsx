@@ -90,6 +90,8 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [sameForAll, setSameForAll] = React.useState(settings.backgroundImageSameForAll);
   const [glassOpacity, setGlassOpacity] = React.useState(settings.glassOpacity);
   const [glassTint, setGlassTint] = React.useState<"dark" | "light">(settings.glassTint);
+  const [notifyNewFiles, setNotifyNewFiles] = React.useState(settings.notifyNewFiles);
+  const [notifyPlatformUpdates, setNotifyPlatformUpdates] = React.useState(settings.notifyPlatformUpdates);
   const [mobileFile, setMobileFile] = React.useState<File | null>(null);
   const [tabletFile, setTabletFile] = React.useState<File | null>(null);
   const [desktopFile, setDesktopFile] = React.useState<File | null>(null);
@@ -322,6 +324,39 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
           </div>
           <input type="hidden" name="glass_tint" value={glassTint} />
         </div>
+      </div>
+
+      <div className="space-y-3 rounded-lg border border-border p-4">
+        <div>
+          <p className="text-sm font-medium text-foreground">Notificações</p>
+          <p className="text-xs text-muted-foreground">
+            Escolha quais tipos de aviso aparecem no sino do cabeçalho pra todo mundo.
+          </p>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name="notify_new_files"
+            checked={notifyNewFiles}
+            onChange={(event) => setNotifyNewFiles(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4 rounded border-input text-accent focus-visible:ring-2 focus-visible:ring-accent"
+          />
+          Novos arquivos adicionados
+        </label>
+
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <input
+            type="checkbox"
+            name="notify_platform_updates"
+            checked={notifyPlatformUpdates}
+            onChange={(event) => setNotifyPlatformUpdates(event.target.checked)}
+            disabled={loading}
+            className="h-4 w-4 rounded border-input text-accent focus-visible:ring-2 focus-visible:ring-accent"
+          />
+          Atualizações e mudanças na plataforma
+        </label>
       </div>
 
       <div>

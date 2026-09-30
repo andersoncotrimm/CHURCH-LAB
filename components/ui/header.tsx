@@ -1,24 +1,24 @@
 "use client";
 
 import * as React from "react";
-import { Bell, Menu, Search, Settings, LogOut, User as UserIcon } from "lucide-react";
+import { Menu, Search, Settings, LogOut, User as UserIcon } from "lucide-react";
 import { Avatar } from "./avatar";
 import { Dropdown } from "./dropdown";
+import { NotificationsDropdown } from "./notifications-dropdown";
 import { cn } from "@/lib/utils";
 
 export interface HeaderProps {
   user: { name: string; role?: string; avatarUrl?: string };
-  notificationCount?: number;
   onMenuClick?: () => void;
   onSignOut?: () => void;
   className?: string;
 }
 
-function Header({ user, notificationCount = 0, onMenuClick, onSignOut, className }: HeaderProps) {
+function Header({ user, onMenuClick, onSignOut, className }: HeaderProps) {
   return (
     <header
       className={cn(
-        "glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border px-4 sm:px-6",
+        "glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 px-4 sm:px-6",
         className
       )}
     >
@@ -47,15 +47,7 @@ function Header({ user, notificationCount = 0, onMenuClick, onSignOut, className
           <Search className="h-5 w-5" />
         </button>
 
-        <button
-          aria-label="Notificações"
-          className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <Bell className="h-5 w-5" />
-          {notificationCount > 0 && (
-            <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
-          )}
-        </button>
+        <NotificationsDropdown />
 
         <div className="mx-1 hidden h-8 w-px bg-border sm:block" />
 

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { isValidHex } from "@/lib/color";
+import { notifyIfEnabled } from "@/lib/notifications";
 
 export interface ActionResult {
   error?: string;
@@ -20,6 +21,8 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
   const backgroundImageDesktopUrl = String(formData.get("background_image_desktop_url") ?? "").trim();
   const glassOpacityRaw = String(formData.get("glass_opacity") ?? "").trim();
   const glassTint = String(formData.get("glass_tint") ?? "dark").trim();
+  const notifyNewFiles = formData.get("notify_new_files") === "on";
+  const notifyPlatformUpdates = formData.get("notify_platform_updates") === "on";
 
   if (!siteName) return { error: "O nome da plataforma é obrigatório." };
   if (siteName.length > 40) return { error: "Nome muito longo (máx. 40 caracteres)." };
@@ -62,6 +65,8 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
         : backgroundImageDesktopUrl || null,
       glass_opacity: glassOpacity,
       glass_tint: glassTint,
+      notify_new_files: notifyNewFiles,
+      notify_platform_updates: notifyPlatformUpdates,
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);
@@ -72,6 +77,8 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
     }
     return { error: error.message };
   }
+
+  await notifyIfEnabled(supabase, "platform_update", "A plataforma recebeu uma atualização de configurações.");
 
   revalidatePath("/", "layout");
   revalidatePath("/referencias");

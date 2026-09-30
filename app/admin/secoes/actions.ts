@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
+import { notifyIfEnabled } from "@/lib/notifications";
 
 export interface ActionResult {
   error?: string;
@@ -67,6 +68,10 @@ export async function createHomeSection(formData: FormData): Promise<ActionResul
 
   const itemsResult = await syncSectionItems(supabase, inserted.id, parsed.values.psd_ids);
   if (itemsResult.error) return itemsResult;
+
+  if (parsed.values.is_active) {
+    await notifyIfEnabled(supabase, "platform_update", `Nova seção "${parsed.values.title}" adicionada na página inicial.`);
+  }
 
   revalidateHomePaths();
   return {};

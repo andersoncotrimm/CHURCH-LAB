@@ -14,6 +14,8 @@ export interface SiteSettings {
   glassOpacity: number;
   /** Tom do vidro: escuro (padrão) ou claro. */
   glassTint: "dark" | "light";
+  notifyNewFiles: boolean;
+  notifyPlatformUpdates: boolean;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -28,6 +30,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   backgroundImageSameForAll: true,
   glassOpacity: 70,
   glassTint: "dark",
+  notifyNewFiles: true,
+  notifyPlatformUpdates: true,
 };
 
 /** Config global do site (nome, cores, carrossel, referências, fundo). Degrada para o padrão em qualquer falha. */
@@ -36,7 +40,7 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
     const { data, error } = await supabase
       .from("site_settings")
       .select(
-        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all, glass_opacity, glass_tint"
+        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all, glass_opacity, glass_tint, notify_new_files, notify_platform_updates"
       )
       .eq("id", true)
       .maybeSingle();
@@ -55,6 +59,8 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
       backgroundImageSameForAll: data.background_image_same_for_all ?? true,
       glassOpacity: data.glass_opacity ?? DEFAULT_SETTINGS.glassOpacity,
       glassTint: data.glass_tint === "light" ? "light" : "dark",
+      notifyNewFiles: data.notify_new_files ?? DEFAULT_SETTINGS.notifyNewFiles,
+      notifyPlatformUpdates: data.notify_platform_updates ?? DEFAULT_SETTINGS.notifyPlatformUpdates,
     };
   } catch {
     return DEFAULT_SETTINGS;

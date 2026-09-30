@@ -2,15 +2,15 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, Heart, Menu, Search, Zap, Settings, LogOut, User as UserIcon, Download } from "lucide-react";
+import { Heart, Menu, Search, Zap, Settings, LogOut, User as UserIcon, Download } from "lucide-react";
 import { Avatar } from "@/components/ui/avatar";
 import { Dropdown } from "@/components/ui/dropdown";
+import { NotificationsDropdown } from "@/components/ui/notifications-dropdown";
 import { cn } from "@/lib/utils";
 
 export interface PlatformHeaderProps {
   user: { name: string; email?: string; avatarUrl?: string };
   credits: number | null;
-  notificationCount?: number;
   onMenuClick?: () => void;
   onSignOut?: () => void;
   className?: string;
@@ -19,7 +19,6 @@ export interface PlatformHeaderProps {
 function PlatformHeader({
   user,
   credits,
-  notificationCount = 0,
   onMenuClick,
   onSignOut,
   className,
@@ -27,7 +26,7 @@ function PlatformHeader({
   return (
     <header
       className={cn(
-        "glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border px-4 sm:px-6",
+        "glass-panel sticky top-0 z-30 flex h-16 items-center gap-3 px-4 sm:px-6",
         className
       )}
     >
@@ -57,15 +56,7 @@ function PlatformHeader({
           <Heart className="h-5 w-5" />
         </Link>
 
-        <button
-          aria-label="Notificações"
-          className="relative rounded-lg p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-        >
-          <Bell className="h-5 w-5" />
-          {notificationCount > 0 && (
-            <span className="absolute right-1.5 top-1.5 flex h-2 w-2 rounded-full bg-accent ring-2 ring-surface" />
-          )}
-        </button>
+        <NotificationsDropdown />
 
         <div className="mx-1 hidden h-8 w-px bg-border sm:block" />
 
