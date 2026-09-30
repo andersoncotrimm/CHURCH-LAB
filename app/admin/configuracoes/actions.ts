@@ -14,6 +14,10 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
   const buttonColor = String(formData.get("button_color") ?? "").trim();
   const carouselIntervalRaw = String(formData.get("carousel_interval_seconds") ?? "").trim();
   const referencePinterestUrl = String(formData.get("reference_pinterest_url") ?? "").trim();
+  const backgroundImageSameForAll = formData.get("background_image_same_for_all") === "on";
+  const backgroundImageMobileUrl = String(formData.get("background_image_mobile_url") ?? "").trim();
+  const backgroundImageTabletUrl = String(formData.get("background_image_tablet_url") ?? "").trim();
+  const backgroundImageDesktopUrl = String(formData.get("background_image_desktop_url") ?? "").trim();
 
   if (!siteName) return { error: "O nome da plataforma é obrigatório." };
   if (siteName.length > 40) return { error: "Nome muito longo (máx. 40 caracteres)." };
@@ -38,6 +42,14 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
       button_color: buttonColor,
       carousel_interval_seconds: carouselInterval,
       reference_pinterest_url: referencePinterestUrl || null,
+      background_image_same_for_all: backgroundImageSameForAll,
+      background_image_mobile_url: backgroundImageMobileUrl || null,
+      background_image_tablet_url: backgroundImageSameForAll
+        ? backgroundImageMobileUrl || null
+        : backgroundImageTabletUrl || null,
+      background_image_desktop_url: backgroundImageSameForAll
+        ? backgroundImageMobileUrl || null
+        : backgroundImageDesktopUrl || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);

@@ -27,7 +27,7 @@ export function AdminShell({ user, children }: AdminShellProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="isolate flex min-h-screen bg-background/80 backdrop-blur-2xl">
       <Sidebar
         items={ADMIN_NAV_ITEMS}
         brand={

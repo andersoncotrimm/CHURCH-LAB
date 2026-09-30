@@ -5,13 +5,14 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { PsdRow } from "@/components/psd/psd-row";
 import { PsdFeatureCard } from "@/components/psd/psd-feature-card";
 import { HeroCarousel } from "@/components/psd/hero-carousel";
-import { FavoritesCarousel } from "@/components/psd/favorites-carousel";
+import { CoverflowCarousel } from "@/components/psd/coverflow-carousel";
 import { RedownloadButton } from "@/components/psd/redownload-button";
 import { createClient } from "@/utils/supabase/server";
 import { getDashboardData } from "@/lib/dashboard";
 import { getUserCreditsSummary } from "@/lib/credits";
 import { getPublishedPsds, getFeaturedPsds, getUserFavoritePsds, getFavoritesCounts } from "@/lib/psd";
 import { getSiteSettings } from "@/lib/settings";
+import { getActiveHomeSections } from "@/lib/home-sections";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
 
-  const [{ continueItem, popularCategories }, credits, allPsds, featuredPsds, favoritePsds, settings] =
+  const [{ continueItem, popularCategories }, credits, allPsds, featuredPsds, favoritePsds, settings, homeSections] =
     await Promise.all([
       getDashboardData(supabase, user.id),
       getUserCreditsSummary(supabase, user.id),
@@ -34,6 +35,7 @@ export default async function DashboardPage() {
       getFeaturedPsds(supabase),
       getUserFavoritePsds(supabase, user.id),
       getSiteSettings(supabase),
+      getActiveHomeSections(supabase),
     ]);
   const availableCredits = credits?.available ?? null;
   const favoritedIds = new Set(favoritePsds.map((p) => p.id));
@@ -72,22 +74,15 @@ export default async function DashboardPage() {
         <HeroCarousel items={heroItems} variant="member" intervalSeconds={settings.carouselIntervalSeconds} />
       )}
 
-      {favoritePsds.length > 0 && (
-        <section className="flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-foreground">Seus favoritos</h2>
-            <Link
-              href="/favoritos"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Ver tudo
-            </Link>
-          </div>
-          <div className="max-w-xs">
-            <FavoritesCarousel items={favoritePsds} availableCredits={availableCredits} />
-          </div>
-        </section>
-      )}
+      {homeSections.map((section) => (
+        <CoverflowCarousel
+          key={section.id}
+          title={section.title}
+          items={section.items}
+          isLoggedIn
+          availableCredits={availableCredits}
+        />
+      ))}
 
       <PsdRow
         title="Mais baixados"

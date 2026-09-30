@@ -9,6 +9,7 @@ import {
   CreditCard,
   Settings,
   SlidersHorizontal,
+  LayoutList,
 } from "lucide-react";
 import type { SidebarItem } from "@/components/ui/sidebar";
 
@@ -17,6 +18,7 @@ export const ADMIN_NAV_ITEMS: SidebarItem[] = [
   { label: "PSDs", href: "/admin/psd", icon: <ImageIcon className="h-[18px] w-[18px]" /> },
   { label: "Categorias", href: "/admin/categorias", icon: <FolderTree className="h-[18px] w-[18px]" /> },
   { label: "Filtros", href: "/admin/filtros", icon: <SlidersHorizontal className="h-[18px] w-[18px]" /> },
+  { label: "Seções da home", href: "/admin/secoes", icon: <LayoutList className="h-[18px] w-[18px]" /> },
   { label: "Usuários", href: "/admin/usuarios", icon: <Users className="h-[18px] w-[18px]" /> },
   { label: "Referências", href: "/admin/referencias", icon: <Images className="h-[18px] w-[18px]" /> },
   { label: "Tags", href: "/admin/tags", icon: <Hash className="h-[18px] w-[18px]" />, disabled: true },

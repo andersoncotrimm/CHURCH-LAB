@@ -19,7 +19,7 @@ export function PublicShell({
   const items = React.useMemo(() => withPsdCategories(PUBLIC_NAV_ITEMS, categories), [categories]);
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="isolate flex min-h-screen bg-background/80 backdrop-blur-2xl">
       <Sidebar
         items={items}
         brand={

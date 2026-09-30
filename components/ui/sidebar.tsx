@@ -216,13 +216,13 @@ function Sidebar({ items, brand, brandCompact, footer, mobileOpen, onMobileClose
         por cima do conteúdo, sem empurrar a página) ao passar o mouse.
       */}
       <div className="group/rail sticky top-0 hidden h-screen w-[76px] shrink-0 lg:block">
-        <div className="flex h-16 items-center justify-center border-b border-r border-border bg-surface">
+        <div className="flex h-16 items-center justify-center border-b border-r border-border bg-surface/70 backdrop-blur-xl">
           {brandCompact ?? brand}
         </div>
 
         <div
           className={cn(
-            "absolute left-0 top-16 z-40 flex h-[calc(100%-4rem)] w-[76px] flex-col overflow-hidden border-r border-border bg-surface",
+            "absolute left-0 top-16 z-40 flex h-[calc(100%-4rem)] w-[76px] flex-col overflow-hidden border-r border-border bg-surface/70 backdrop-blur-xl",
             "transition-[width,box-shadow] duration-200 ease-out",
             "group-hover/rail:w-64 group-hover/rail:shadow-floating"
           )}
@@ -249,7 +249,7 @@ function Sidebar({ items, brand, brandCompact, footer, mobileOpen, onMobileClose
             className="absolute inset-0 animate-fade-in bg-black/60 backdrop-blur-sm"
             onClick={onMobileClose}
           />
-          <div className="relative z-10 flex h-full w-64 animate-scale-in flex-col border-r border-border bg-surface">
+          <div className="relative z-10 flex h-full w-64 animate-scale-in flex-col border-r border-border bg-surface/85 backdrop-blur-xl">
             <div className="flex items-center justify-between px-5 py-5">
               {brand}
               <button

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PublicShell } from "@/components/public/public-shell";
 import { HeroCarousel } from "@/components/psd/hero-carousel";
+import { CoverflowCarousel } from "@/components/psd/coverflow-carousel";
 import { PsdRow } from "@/components/psd/psd-row";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Layers } from "lucide-react";
@@ -15,7 +16,8 @@ import {
   type PopularCategory,
 } from "@/lib/psd";
 import { getSiteSettings } from "@/lib/settings";
-import type { Category, PsdFile } from "@/lib/types/psd";
+import { getActiveHomeSections } from "@/lib/home-sections";
+import type { Category, PsdFile, HomeSectionWithItems } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +32,7 @@ export default async function LandingPage() {
   let categories: Category[] = [];
   let favoritesCounts = new Map<string, number>();
   let carouselIntervalSeconds = 7;
+  let homeSections: HomeSectionWithItems[] = [];
 
   try {
     const supabase = await createClient();
@@ -40,18 +43,20 @@ export default async function LandingPage() {
     userId = user?.id ?? null;
 
     if (!userId) {
-      const [publishedPsds, featured, popular, cats, settings] = await Promise.all([
+      const [publishedPsds, featured, popular, cats, settings, sections] = await Promise.all([
         getPublishedPsds(supabase),
         getFeaturedPsds(supabase),
         getPopularCategories(supabase),
         getCategories(supabase),
         getSiteSettings(supabase),
+        getActiveHomeSections(supabase),
       ]);
       allPsds = publishedPsds;
       featuredPsds = featured;
       popularCategories = popular;
       categories = cats;
       carouselIntervalSeconds = settings.carouselIntervalSeconds;
+      homeSections = sections;
       favoritesCounts = await getFavoritesCounts(supabase, allPsds.map((p) => p.id));
     }
   } catch (error) {
@@ -93,6 +98,10 @@ export default async function LandingPage() {
             />
           </div>
         )}
+
+        {homeSections.map((section) => (
+          <CoverflowCarousel key={section.id} title={section.title} items={section.items} isLoggedIn={false} />
+        ))}
 
         <PsdRow title="Mais baixados" psds={mostDownloaded} isLoggedIn={false} viewAllHref="/psd?ordenar=baixados" />
         <PsdRow title="Novidades" psds={newest} isLoggedIn={false} viewAllHref="/psd" />

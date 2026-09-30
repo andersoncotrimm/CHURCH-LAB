@@ -52,6 +52,17 @@ export interface PsdFile {
   downloadsCount: number;
 }
 
+export interface HomeSection {
+  id: string;
+  title: string;
+  sort_order: number;
+  is_active: boolean;
+}
+
+export interface HomeSectionWithItems extends HomeSection {
+  items: PsdFile[];
+}
+
 export type ContentType = "psd" | "elementos" | "plugins" | "ferramentas" | "sistemas";
 
 export const CONTENT_TYPES: { value: ContentType; label: string }[] = [
