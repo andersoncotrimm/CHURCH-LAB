@@ -46,6 +46,8 @@ export default async function MinhaContaPage() {
             phone={profile?.phone ?? ""}
             email={user.email ?? ""}
             username={profile?.username ?? ""}
+            avatarUrl={profile?.avatar_url ?? ""}
+            userId={user.id}
           />
         </CardContent>
       </Card>

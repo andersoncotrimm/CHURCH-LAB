@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, Zap, CheckCircle2 } from "lucide-react";
+import { Download, Zap, CheckCircle2, Info } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { RedownloadButton } from "@/components/psd/redownload-button";
 import { createClient } from "@/utils/supabase/server";
+import { REDOWNLOAD_WINDOW_DAYS } from "@/lib/download-constants";
 
 export const dynamic = "force-dynamic";
 
@@ -25,10 +26,12 @@ export default async function MeusDownloadsPage() {
 
   if (!user) return null;
 
+  const windowStart = new Date(Date.now() - REDOWNLOAD_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const { data: downloads } = await supabase
     .from("downloads")
     .select("id, credits_spent, created_at, psd_files(id, title, slug)")
     .eq("user_id", user.id)
+    .gte("created_at", windowStart)
     .order("created_at", { ascending: false });
 
   const rows = downloads ?? [];
@@ -37,7 +40,16 @@ export default async function MeusDownloadsPage() {
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Meus Downloads</h1>
-        <p className="text-sm text-muted-foreground">Histórico completo dos materiais que você já baixou.</p>
+        <p className="text-sm text-muted-foreground">Materiais que você baixou recentemente.</p>
+      </div>
+
+      <div className="flex items-start gap-2 rounded-lg border border-accent/30 bg-accent/5 p-4 text-sm text-foreground">
+        <Info className="mt-0.5 h-4 w-4 shrink-0 text-accent" />
+        <p>
+          Todo download fica disponível aqui por <strong>{REDOWNLOAD_WINDOW_DAYS} dias</strong> — nesse período você
+          pode baixar o mesmo material de novo sem gastar crédito. Depois desse prazo ele some dessa lista e, se você
+          quiser baixar de novo, o download volta a consumir créditos normalmente.
+        </p>
       </div>
 
       {rows.length === 0 ? (

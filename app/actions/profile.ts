@@ -20,6 +20,7 @@ export async function updateProfile(formData: FormData): Promise<ProfileActionRe
   const fullName = String(formData.get("full_name") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
   const usernameRaw = String(formData.get("username") ?? "").trim().toLowerCase();
+  const avatarUrl = String(formData.get("avatar_url") ?? "").trim();
 
   if (!fullName) return { error: "Nome é obrigatório." };
 
@@ -31,7 +32,12 @@ export async function updateProfile(formData: FormData): Promise<ProfileActionRe
 
   const { error } = await supabase
     .from("profiles")
-    .update({ full_name: fullName, phone: phone || null, username: usernameRaw || null })
+    .update({
+      full_name: fullName,
+      phone: phone || null,
+      username: usernameRaw || null,
+      avatar_url: avatarUrl || null,
+    })
     .eq("id", user.id);
 
   if (error) {
@@ -39,7 +45,6 @@ export async function updateProfile(formData: FormData): Promise<ProfileActionRe
     return { error: error.message };
   }
 
-  revalidatePath("/minha-conta");
-  revalidatePath("/dashboard");
+  revalidatePath("/", "layout");
   return { success: true };
 }

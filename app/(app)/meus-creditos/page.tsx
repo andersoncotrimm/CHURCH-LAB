@@ -68,7 +68,12 @@ export default async function MeusCreditosPage() {
             <Card>
               <CardContent className="pt-5">
                 <p className="text-xs font-medium text-muted-foreground">Plano atual</p>
-                <p className="mt-2 text-2xl font-semibold text-foreground">{credits.planName ?? "—"}</p>
+                <p
+                  className="mt-2 truncate text-2xl font-semibold text-foreground"
+                  title={credits.planName ?? undefined}
+                >
+                  {credits.planName ?? "—"}
+                </p>
               </CardContent>
             </Card>
             <Card>

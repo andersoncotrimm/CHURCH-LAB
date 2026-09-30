@@ -1,18 +1,17 @@
 "use server";
 
 import { createClient } from "@/utils/supabase/server";
+import { REDOWNLOAD_WINDOW_DAYS } from "@/lib/download-constants";
 
 export type RedownloadResult =
   | { status: "error"; message: string }
   | { status: "success"; url: string; fileName: string };
 
 /**
- * Gera uma nova signed URL para um PSD que o usuário JÁ baixou antes —
- * não chama redeem_psd_credits() de novo, então não cobra créditos uma
- * segunda vez. Só funciona porque a RLS de storage.objects já libera
- * leitura para quem tem um download anterior registrado; aqui só
- * confirmamos isso explicitamente antes de gerar o link, para dar um
- * erro claro em vez de deixar a RLS falhar silenciosamente.
+ * Gera uma nova signed URL para um PSD que o usuário JÁ baixou antes, nos
+ * últimos REDOWNLOAD_WINDOW_DAYS dias — não chama redeem_psd_credits() de
+ * novo, então não cobra créditos uma segunda vez. Passada a janela, pede
+ * pra usar o botão de download normal (que aí sim cobra de novo).
  */
 export async function getRedownloadUrl(psdId: string): Promise<RedownloadResult> {
   const supabase = await createClient();
@@ -25,16 +24,22 @@ export async function getRedownloadUrl(psdId: string): Promise<RedownloadResult>
     return { status: "error", message: "Você precisa estar logado." };
   }
 
+  const windowStart = new Date(Date.now() - REDOWNLOAD_WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString();
   const { data: existing } = await supabase
     .from("downloads")
     .select("id")
     .eq("user_id", user.id)
     .eq("psd_id", psdId)
+    .gte("created_at", windowStart)
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
   if (!existing) {
-    return { status: "error", message: "Você ainda não baixou este arquivo." };
+    return {
+      status: "error",
+      message: `O prazo de ${REDOWNLOAD_WINDOW_DAYS} dias pra baixar de novo sem gastar crédito já passou. Baixe pela página do material.`,
+    };
   }
 
   const { data: psd, error: psdError } = await supabase
