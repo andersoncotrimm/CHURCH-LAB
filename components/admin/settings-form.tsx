@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { updateSiteSettings } from "@/app/admin/configuracoes/actions";
+import { resizeImageForUpload } from "@/lib/image-resize";
 import type { SiteSettings } from "@/lib/settings";
 
 function ColorField({
@@ -101,12 +102,15 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [success, setSuccess] = React.useState(false);
 
   async function uploadBackground(file: File, suffix: string): Promise<string> {
+    // Redimensiona/comprime antes de subir — a foto original (às vezes vários
+    // MB) demorava tanto pra baixar que a página ficava mostrando só o fundo
+    // por um bom tempo enquanto o resto carregava.
+    const resized = await resizeImageForUpload(file);
     const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const path = `fundo-${suffix}-${Date.now()}.${ext}`;
+    const path = `fundo-${suffix}-${Date.now()}.jpg`;
     const { error: uploadError } = await supabase.storage
       .from("site-backgrounds")
-      .upload(path, file, { upsert: true, contentType: file.type || undefined });
+      .upload(path, resized, { upsert: true, contentType: "image/jpeg" });
     if (uploadError) throw new Error(`Falha ao enviar a imagem (${suffix}): ${uploadError.message}`);
     return supabase.storage.from("site-backgrounds").getPublicUrl(path).data.publicUrl;
   }
