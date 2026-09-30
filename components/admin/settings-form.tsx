@@ -92,6 +92,7 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [glassTint, setGlassTint] = React.useState<"dark" | "light">(settings.glassTint);
   const [notifyNewFiles, setNotifyNewFiles] = React.useState(settings.notifyNewFiles);
   const [notifyPlatformUpdates, setNotifyPlatformUpdates] = React.useState(settings.notifyPlatformUpdates);
+  const [contactUrl, setContactUrl] = React.useState(settings.contactUrl ?? "");
   const [mobileFile, setMobileFile] = React.useState<File | null>(null);
   const [tabletFile, setTabletFile] = React.useState<File | null>(null);
   const [desktopFile, setDesktopFile] = React.useState<File | null>(null);
@@ -358,6 +359,17 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
           Atualizações e mudanças na plataforma
         </label>
       </div>
+
+      <Input
+        label="Link de contato pra comprar créditos extras (opcional)"
+        name="contact_url"
+        type="url"
+        value={contactUrl}
+        onChange={(event) => setContactUrl(event.target.value)}
+        placeholder="https://wa.me/55..."
+        disabled={loading}
+        hint='Aparece como botão "Falar com o suporte" em Meus Créditos, junto com os pacotes cadastrados em /admin/creditos. Ainda não existe cobrança automática — a compra é combinada por fora e o crédito é adicionado manualmente.'
+      />
 
       <div>
         <Button type="submit" variant="accent" loading={loading}>

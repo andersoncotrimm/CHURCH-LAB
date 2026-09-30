@@ -1,11 +1,17 @@
 import Link from "next/link";
-import { Zap, Calendar, TrendingDown, TrendingUp, History } from "lucide-react";
+import { Zap, Calendar, TrendingDown, TrendingUp, History, ShoppingCart, MessageCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
 import { getUserCreditsSummary } from "@/lib/credits";
+import { getSiteSettings } from "@/lib/settings";
+import type { CreditPackage } from "@/lib/types/credit-package";
+
+function formatPrice(price: number) {
+  return price.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+}
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +32,11 @@ export default async function MeusCreditosPage() {
 
   if (!user) return null;
 
-  const credits = await getUserCreditsSummary(supabase, user.id);
+  const [credits, settings, { data: packages }] = await Promise.all([
+    getUserCreditsSummary(supabase, user.id),
+    getSiteSettings(supabase),
+    supabase.from("credit_packages").select("*").eq("is_active", true).order("sort_order", { ascending: true }),
+  ]);
 
   const { data: history } = await supabase
     .from("credit_transactions")
@@ -34,6 +44,8 @@ export default async function MeusCreditosPage() {
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .limit(30);
+
+  const creditPackages = (packages ?? []) as CreditPackage[];
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
@@ -105,6 +117,43 @@ export default async function MeusCreditosPage() {
             </div>
           )}
         </>
+      )}
+
+      {creditPackages.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-4 w-4" />
+              Comprar mais créditos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              Precisa de mais créditos antes do fim do ciclo? Escolha um pacote e fale com o suporte pra finalizar —
+              os créditos são adicionados na sua conta assim que o pagamento for confirmado.
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {creditPackages.map((pkg) => (
+                <div key={pkg.id} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+                  <p className="text-sm font-semibold text-foreground">{pkg.name}</p>
+                  <p className="flex items-center gap-1.5 text-xl font-semibold text-foreground">
+                    <Zap className="h-4 w-4 text-accent" />
+                    {pkg.credits_amount} créditos
+                  </p>
+                  <p className="text-sm text-muted-foreground">{formatPrice(pkg.price)}</p>
+                </div>
+              ))}
+            </div>
+            {settings.contactUrl && (
+              <a href={settings.contactUrl} target="_blank" rel="noopener noreferrer" className="w-fit">
+                <Button variant="accent">
+                  <MessageCircle className="h-4 w-4" />
+                  Falar com o suporte
+                </Button>
+              </a>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       <Card>

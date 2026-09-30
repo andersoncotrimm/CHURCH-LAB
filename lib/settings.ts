@@ -16,6 +16,8 @@ export interface SiteSettings {
   glassTint: "dark" | "light";
   notifyNewFiles: boolean;
   notifyPlatformUpdates: boolean;
+  /** Link de contato (WhatsApp, etc.) pra finalizar a compra de créditos extras — sem gateway de pagamento ainda, o crédito é adicionado manualmente. */
+  contactUrl: string | null;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -32,6 +34,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   glassTint: "dark",
   notifyNewFiles: true,
   notifyPlatformUpdates: true,
+  contactUrl: null,
 };
 
 /** Config global do site (nome, cores, carrossel, referências, fundo). Degrada para o padrão em qualquer falha. */
@@ -40,7 +43,7 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
     const { data, error } = await supabase
       .from("site_settings")
       .select(
-        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all, glass_opacity, glass_tint, notify_new_files, notify_platform_updates"
+        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all, glass_opacity, glass_tint, notify_new_files, notify_platform_updates, contact_url"
       )
       .eq("id", true)
       .maybeSingle();
@@ -61,6 +64,7 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
       glassTint: data.glass_tint === "light" ? "light" : "dark",
       notifyNewFiles: data.notify_new_files ?? DEFAULT_SETTINGS.notifyNewFiles,
       notifyPlatformUpdates: data.notify_platform_updates ?? DEFAULT_SETTINGS.notifyPlatformUpdates,
+      contactUrl: data.contact_url || null,
     };
   } catch {
     return DEFAULT_SETTINGS;

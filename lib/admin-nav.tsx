@@ -22,7 +22,7 @@ export const ADMIN_NAV_ITEMS: SidebarItem[] = [
   { label: "Usuários", href: "/admin/usuarios", icon: <Users className="h-[18px] w-[18px]" /> },
   { label: "Referências", href: "/admin/referencias", icon: <Images className="h-[18px] w-[18px]" /> },
   { label: "Tags", href: "/admin/tags", icon: <Hash className="h-[18px] w-[18px]" />, disabled: true },
-  { label: "Créditos", href: "/admin/creditos", icon: <Coins className="h-[18px] w-[18px]" />, disabled: true },
+  { label: "Créditos extras", href: "/admin/creditos", icon: <Coins className="h-[18px] w-[18px]" /> },
   { label: "Assinaturas", href: "/admin/assinaturas", icon: <CreditCard className="h-[18px] w-[18px]" />, disabled: true },
   { label: "Configurações", href: "/admin/configuracoes", icon: <Settings className="h-[18px] w-[18px]" /> },
 ];

@@ -23,6 +23,7 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
   const glassTint = String(formData.get("glass_tint") ?? "dark").trim();
   const notifyNewFiles = formData.get("notify_new_files") === "on";
   const notifyPlatformUpdates = formData.get("notify_platform_updates") === "on";
+  const contactUrl = String(formData.get("contact_url") ?? "").trim();
 
   if (!siteName) return { error: "O nome da plataforma é obrigatório." };
   if (siteName.length > 40) return { error: "Nome muito longo (máx. 40 caracteres)." };
@@ -46,6 +47,10 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
     return { error: "Tom do vidro inválido." };
   }
 
+  if (contactUrl && !/^https?:\/\//.test(contactUrl)) {
+    return { error: "Link de contato inválido — precisa começar com http:// ou https://" };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")
@@ -67,6 +72,7 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
       glass_tint: glassTint,
       notify_new_files: notifyNewFiles,
       notify_platform_updates: notifyPlatformUpdates,
+      contact_url: contactUrl || null,
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);
