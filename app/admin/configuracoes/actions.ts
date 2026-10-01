@@ -24,6 +24,7 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
   const notifyNewFiles = formData.get("notify_new_files") === "on";
   const notifyPlatformUpdates = formData.get("notify_platform_updates") === "on";
   const contactUrl = String(formData.get("contact_url") ?? "").trim();
+  const creditUnitPriceRaw = String(formData.get("credit_unit_price") ?? "");
 
   if (!siteName) return { error: "O nome da plataforma é obrigatório." };
   if (siteName.length > 40) return { error: "Nome muito longo (máx. 40 caracteres)." };
@@ -51,6 +52,11 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
     return { error: "Link de contato inválido — precisa começar com http:// ou https://" };
   }
 
+  const creditUnitPrice = Number(creditUnitPriceRaw.replace(",", "."));
+  if (Number.isNaN(creditUnitPrice) || creditUnitPrice < 0) {
+    return { error: "Preço por crédito avulso inválido." };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")
@@ -73,6 +79,7 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
       notify_new_files: notifyNewFiles,
       notify_platform_updates: notifyPlatformUpdates,
       contact_url: contactUrl || null,
+      credit_unit_price: creditUnitPrice,
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);

@@ -94,6 +94,7 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [notifyNewFiles, setNotifyNewFiles] = React.useState(settings.notifyNewFiles);
   const [notifyPlatformUpdates, setNotifyPlatformUpdates] = React.useState(settings.notifyPlatformUpdates);
   const [contactUrl, setContactUrl] = React.useState(settings.contactUrl ?? "");
+  const [creditUnitPrice, setCreditUnitPrice] = React.useState(settings.creditUnitPrice);
   const [mobileFile, setMobileFile] = React.useState<File | null>(null);
   const [tabletFile, setTabletFile] = React.useState<File | null>(null);
   const [desktopFile, setDesktopFile] = React.useState<File | null>(null);
@@ -373,6 +374,18 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
         placeholder="https://wa.me/55..."
         disabled={loading}
         hint='Aparece como botão "Falar com o suporte" em Meus Créditos, junto com os pacotes cadastrados em /admin/creditos. Ainda não existe cobrança automática — a compra é combinada por fora e o crédito é adicionado manualmente.'
+      />
+
+      <Input
+        label="Preço por crédito avulso (R$)"
+        name="credit_unit_price"
+        type="number"
+        min={0}
+        step="0.01"
+        value={creditUnitPrice}
+        onChange={(event) => setCreditUnitPrice(Number(event.target.value))}
+        disabled={loading}
+        hint='Usado pra calcular o total da opção "quantidade personalizada" em Meus Créditos, onde a pessoa escolhe quantos créditos quer comprar.'
       />
 
       <div>
