@@ -10,6 +10,7 @@ import {
   Settings,
   SlidersHorizontal,
   LayoutList,
+  ShieldCheck,
 } from "lucide-react";
 import type { SidebarItem } from "@/components/ui/sidebar";
 
@@ -25,4 +26,5 @@ export const ADMIN_NAV_ITEMS: SidebarItem[] = [
   { label: "Créditos extras", href: "/admin/creditos", icon: <Coins className="h-[18px] w-[18px]" /> },
   { label: "Assinaturas", href: "/admin/assinaturas", icon: <CreditCard className="h-[18px] w-[18px]" />, disabled: true },
   { label: "Configurações", href: "/admin/configuracoes", icon: <Settings className="h-[18px] w-[18px]" /> },
+  { label: "Segurança", href: "/admin/seguranca", icon: <ShieldCheck className="h-[18px] w-[18px]" /> },
 ];
