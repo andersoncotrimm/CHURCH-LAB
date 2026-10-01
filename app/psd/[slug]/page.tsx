@@ -58,7 +58,7 @@ export default async function PsdDetailPage({ params }: { params: { slug: string
 
   const fileSize = formatFileSize(psd.file_size);
   const ctaState = computeCtaState(isLoggedIn, availableCredits, psd.credit_cost);
-  const hasPsd = !!psd.file_path;
+  const hasPsd = !!psd.file_path || !!psd.drive_file_url;
   const hasCanva = !!psd.canva_url;
 
   return (

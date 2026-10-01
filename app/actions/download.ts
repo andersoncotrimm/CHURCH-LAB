@@ -80,12 +80,23 @@ export async function downloadPsd(psdId: string): Promise<DownloadResult> {
 
   const { data: psd, error: psdError } = await supabase
     .from("psd_files")
-    .select("file_path, title")
+    .select("file_path, drive_file_url, title")
     .eq("id", psdId)
     .single();
 
-  if (psdError || !psd?.file_path) {
+  if (psdError || (!psd?.file_path && !psd?.drive_file_url)) {
     return { status: "error", message: "Arquivo não encontrado." };
+  }
+
+  revalidatePath("/meus-downloads");
+  revalidatePath("/meus-creditos");
+  revalidatePath("/dashboard");
+
+  // Arquivo guardado no Google Drive do admin: a URL aponta pra nossa
+  // própria rota (/api/baixar), que busca os bytes do Drive e entrega como
+  // download direto — o usuário nunca vê a página do Drive.
+  if (psd.drive_file_url) {
+    return { status: "success", url: `/api/baixar/${psdId}`, fileName: `${psd.title}.psd` };
   }
 
   // file_path guarda o caminho DENTRO do bucket "psd-originals" (sem o
@@ -93,15 +104,11 @@ export async function downloadPsd(psdId: string): Promise<DownloadResult> {
   // na policy de leitura protegida.
   const { data: signed, error: signError } = await supabase.storage
     .from("psd-originals")
-    .createSignedUrl(psd.file_path, 120);
+    .createSignedUrl(psd.file_path!, 120);
 
   if (signError || !signed) {
     return { status: "error", message: "Não foi possível gerar o link de download." };
   }
-
-  revalidatePath("/meus-downloads");
-  revalidatePath("/meus-creditos");
-  revalidatePath("/dashboard");
 
   return { status: "success", url: signed.signedUrl, fileName: `${psd.title}.psd` };
 }

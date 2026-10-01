@@ -362,6 +362,16 @@ export function PsdFormModal({ open, onClose, psd, categories }: PsdFormModalPro
             placeholder="https://www.canva.com/design/..."
             disabled={loading}
           />
+
+          <Input
+            label="Link do Google Drive (opcional)"
+            name="drive_file_url"
+            type="url"
+            defaultValue={psd?.drive_file_url ?? ""}
+            placeholder="https://drive.google.com/file/d/..."
+            hint='Guarde o arquivo original no seu Drive e cole aqui o link de compartilhamento, com permissão "Qualquer pessoa com o link pode visualizar". O download do usuário continua acontecendo direto, num clique só — ele nunca vê a página do Drive. Se preenchido, substitui o arquivo enviado acima como fonte do download.'
+            disabled={loading}
+          />
         </div>
 
         <Input

@@ -24,7 +24,7 @@ function PsdCard({ psd, isFavorited = false, isLoggedIn, availableCredits = null
   const [pending, setPending] = React.useState(false);
   const [detailsOpen, setDetailsOpen] = React.useState(false);
   const category = psd.categories[0];
-  const hasPsd = !!psd.file_path;
+  const hasPsd = !!psd.file_path || !!psd.drive_file_url;
   const hasCanva = !!psd.canva_url;
   const cardShapeAspect = CARD_SHAPE_ASPECT[psd.card_orientation ?? category?.card_shape ?? "square"];
 

@@ -44,17 +44,21 @@ export async function getRedownloadUrl(psdId: string): Promise<RedownloadResult>
 
   const { data: psd, error: psdError } = await supabase
     .from("psd_files")
-    .select("file_path, title")
+    .select("file_path, drive_file_url, title")
     .eq("id", psdId)
     .single();
 
-  if (psdError || !psd?.file_path) {
+  if (psdError || (!psd?.file_path && !psd?.drive_file_url)) {
     return { status: "error", message: "Arquivo não encontrado." };
+  }
+
+  if (psd.drive_file_url) {
+    return { status: "success", url: `/api/baixar/${psdId}`, fileName: `${psd.title}.psd` };
   }
 
   const { data: signed, error: signError } = await supabase.storage
     .from("psd-originals")
-    .createSignedUrl(psd.file_path, 120);
+    .createSignedUrl(psd.file_path!, 120);
 
   if (signError || !signed) {
     return { status: "error", message: "Não foi possível gerar o link de download." };

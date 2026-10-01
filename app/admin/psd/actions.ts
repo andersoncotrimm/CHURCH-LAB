@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { slugify } from "@/lib/slugify";
 import { notifyIfEnabled } from "@/lib/notifications";
+import { isDriveUrl } from "@/lib/google-drive-download";
 import { CONTENT_TYPES } from "@/lib/types/psd";
 import type { ContentType, CardOrientation } from "@/lib/types/psd";
 
@@ -34,6 +35,7 @@ interface PsdFields {
   thumbnail_url: string;
   preview_url: string;
   file_path: string;
+  drive_file_url: string;
   file_size: number | null;
   file_format: string;
 }
@@ -77,6 +79,9 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
   const fileSizeParsed = Number(fileSizeRaw);
   const fileSize = fileSizeRaw && Number.isFinite(fileSizeParsed) ? fileSizeParsed : null;
 
+  const driveFileUrlRaw = String(formData.get("drive_file_url") ?? "").trim();
+  const driveFileUrl = driveFileUrlRaw && isDriveUrl(driveFileUrlRaw) ? driveFileUrlRaw : "";
+
   return {
     values: {
       title,
@@ -97,6 +102,7 @@ function parsePsdForm(formData: FormData): { values: PsdFields } | { error: stri
       thumbnail_url: String(formData.get("thumbnail_url") ?? "").trim(),
       preview_url: String(formData.get("preview_url") ?? "").trim(),
       file_path: String(formData.get("file_path") ?? "").trim(),
+      drive_file_url: driveFileUrl,
       file_size: fileSize,
       file_format: String(formData.get("file_format") ?? "").trim(),
     },
@@ -176,6 +182,7 @@ export async function createPsd(formData: FormData): Promise<ActionResult> {
       thumbnail_url: v.thumbnail_url || null,
       preview_url: v.preview_url || null,
       file_path: v.file_path || null,
+      drive_file_url: v.drive_file_url || null,
       file_size: v.file_size,
       file_format: v.file_format ? v.file_format.toUpperCase() : null,
       dimensions: v.dimensions || null,
@@ -223,6 +230,7 @@ export async function updatePsd(id: string, formData: FormData): Promise<ActionR
       thumbnail_url: v.thumbnail_url || null,
       preview_url: v.preview_url || null,
       file_path: v.file_path || null,
+      drive_file_url: v.drive_file_url || null,
       file_size: v.file_size,
       file_format: v.file_format ? v.file_format.toUpperCase() : null,
       dimensions: v.dimensions || null,

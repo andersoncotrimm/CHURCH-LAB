@@ -26,7 +26,7 @@ function formatFileSize(bytes: number | null) {
 export function PsdDetailModal({ psd, open, onClose, isLoggedIn, availableCredits }: PsdDetailModalProps) {
   const fileSize = formatFileSize(psd.file_size);
   const ctaState = computeCtaState(isLoggedIn, availableCredits, psd.credit_cost);
-  const hasPsd = !!psd.file_path;
+  const hasPsd = !!psd.file_path || !!psd.drive_file_url;
   const hasCanva = !!psd.canva_url;
 
   return (
