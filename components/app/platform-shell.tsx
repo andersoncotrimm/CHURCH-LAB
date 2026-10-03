@@ -8,16 +8,19 @@ import { Sidebar } from "@/components/ui/sidebar";
 import { PlatformHeader } from "@/components/app/platform-header";
 import { Avatar } from "@/components/ui/avatar";
 import { Logo } from "@/components/brand/logo";
-import { APP_NAV_ITEMS, withPsdCategories } from "@/lib/nav";
+import { APP_NAV_ITEMS, withPsdCategories, filterByEnabledContentTypes } from "@/lib/nav";
 import { createClient } from "@/utils/supabase/client";
-import type { Category } from "@/lib/types/psd";
+import type { Category, ContentType } from "@/lib/types/psd";
 import type { SidebarItem } from "@/components/ui/sidebar";
+
+const ALL_CONTENT_TYPES: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
 
 export interface PlatformShellProps {
   user: { name: string; email?: string; avatarUrl?: string };
   planName: string | null;
   credits: number | null;
   categories?: Category[];
+  enabledContentTypes?: ContentType[];
   isAdmin?: boolean;
   children: React.ReactNode;
 }
@@ -29,13 +32,21 @@ const ADMIN_LINK_ITEM: SidebarItem = {
   sectionLabel: "Administração",
 };
 
-export function PlatformShell({ user, planName, credits, categories = [], isAdmin = false, children }: PlatformShellProps) {
+export function PlatformShell({
+  user,
+  planName,
+  credits,
+  categories = [],
+  enabledContentTypes = ALL_CONTENT_TYPES,
+  isAdmin = false,
+  children,
+}: PlatformShellProps) {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const items = React.useMemo(() => {
-    const base = withPsdCategories(APP_NAV_ITEMS, categories);
+    const base = withPsdCategories(filterByEnabledContentTypes(APP_NAV_ITEMS, enabledContentTypes), categories);
     return isAdmin ? [...base, ADMIN_LINK_ITEM] : base;
-  }, [categories, isAdmin]);
+  }, [categories, enabledContentTypes, isAdmin]);
 
   async function handleSignOut() {
     const supabase = createClient();

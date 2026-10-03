@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ContentType } from "@/lib/types/psd";
 
 export interface SiteSettings {
   siteName: string;
@@ -20,6 +21,10 @@ export interface SiteSettings {
   contactUrl: string | null;
   /** Preço (R$) por crédito avulso — usado pra calcular o total da opção "quantidade personalizada" em Meus Créditos. */
   creditUnitPrice: number;
+  /** Seções (PSD/Elementos/Plugins/Ferramentas/Sistemas) visíveis no menu e com página pública habilitada. */
+  enabledContentTypes: ContentType[];
+  /** Se definido, a home (/) e o dashboard (/dashboard) levam direto pra essa seção em vez do carrossel+fileiras padrão. */
+  homeContentType: ContentType | null;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -38,7 +43,11 @@ const DEFAULT_SETTINGS: SiteSettings = {
   notifyPlatformUpdates: true,
   contactUrl: null,
   creditUnitPrice: 0.5,
+  enabledContentTypes: ["psd", "elementos", "plugins", "ferramentas", "sistemas"],
+  homeContentType: null,
 };
+
+const ALL_CONTENT_TYPES: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
 
 /** Config global do site (nome, cores, carrossel, referências, fundo). Degrada para o padrão em qualquer falha. */
 export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSettings> {
@@ -46,7 +55,7 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
     const { data, error } = await supabase
       .from("site_settings")
       .select(
-        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all, glass_opacity, glass_tint, notify_new_files, notify_platform_updates, contact_url, credit_unit_price"
+        "site_name, background_color, button_color, carousel_interval_seconds, reference_pinterest_url, background_image_mobile_url, background_image_tablet_url, background_image_desktop_url, background_image_same_for_all, glass_opacity, glass_tint, notify_new_files, notify_platform_updates, contact_url, credit_unit_price, enabled_content_types, home_content_type"
       )
       .eq("id", true)
       .maybeSingle();
@@ -69,6 +78,12 @@ export async function getSiteSettings(supabase: SupabaseClient): Promise<SiteSet
       notifyPlatformUpdates: data.notify_platform_updates ?? DEFAULT_SETTINGS.notifyPlatformUpdates,
       contactUrl: data.contact_url || null,
       creditUnitPrice: data.credit_unit_price ?? DEFAULT_SETTINGS.creditUnitPrice,
+      enabledContentTypes:
+        (data.enabled_content_types as ContentType[] | null)?.filter((type) => ALL_CONTENT_TYPES.includes(type)) ??
+        DEFAULT_SETTINGS.enabledContentTypes,
+      homeContentType: ALL_CONTENT_TYPES.includes(data.home_content_type as ContentType)
+        ? (data.home_content_type as ContentType)
+        : null,
     };
   } catch {
     return DEFAULT_SETTINGS;

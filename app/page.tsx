@@ -17,7 +17,8 @@ import {
 } from "@/lib/psd";
 import { getSiteSettings } from "@/lib/settings";
 import { getActiveHomeSections } from "@/lib/home-sections";
-import type { Category, PsdFile, HomeSectionWithItems } from "@/lib/types/psd";
+import { CONTENT_TYPE_ROUTES } from "@/lib/types/psd";
+import type { Category, PsdFile, HomeSectionWithItems, ContentType } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,8 @@ export default async function LandingPage() {
   let favoritesCounts = new Map<string, number>();
   let carouselIntervalSeconds = 7;
   let homeSections: HomeSectionWithItems[] = [];
+  let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
+  let homeContentTypeRedirect: string | null = null;
 
   try {
     const supabase = await createClient();
@@ -57,13 +60,24 @@ export default async function LandingPage() {
       categories = cats;
       carouselIntervalSeconds = settings.carouselIntervalSeconds;
       homeSections = sections;
+      enabledContentTypes = settings.enabledContentTypes;
       favoritesCounts = await getFavoritesCounts(supabase, allPsds.map((p) => p.id));
+
+      if (settings.homeContentType && settings.enabledContentTypes.includes(settings.homeContentType)) {
+        homeContentTypeRedirect = CONTENT_TYPE_ROUTES[settings.homeContentType];
+      }
     }
   } catch (error) {
     console.error("Falha ao carregar a home pública:", error);
   }
 
   if (userId) redirect("/dashboard");
+
+  // Página principal escolhida pelo admin em /admin/configuracoes — leva
+  // direto pra seção, em vez da home padrão (carrossel + fileiras). Fora do
+  // try/catch: redirect() lança um sinal especial que não pode ser engolido
+  // por um catch genérico.
+  if (homeContentTypeRedirect) redirect(homeContentTypeRedirect);
 
   // Sem destaques escolhidos no admin, cai pro mais baixado como único slide.
   const heroItems =
@@ -85,7 +99,7 @@ export default async function LandingPage() {
     .slice(0, 12);
 
   return (
-    <PublicShell categories={categories}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
         {heroItems.length > 0 ? (
           <HeroCarousel items={heroItems} variant="guest" intervalSeconds={carouselIntervalSeconds} />

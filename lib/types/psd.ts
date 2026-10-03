@@ -77,3 +77,12 @@ export const CONTENT_TYPES: { value: ContentType; label: string }[] = [
   { value: "ferramentas", label: "Ferramentas" },
   { value: "sistemas", label: "Sistemas" },
 ];
+
+/** Rota pública da página de listagem de cada seção — usada tanto pelo menu quanto pelo redirecionamento de "página principal". */
+export const CONTENT_TYPE_ROUTES: Record<ContentType, string> = {
+  psd: "/psd",
+  elementos: "/elementos",
+  plugins: "/plugins",
+  ferramentas: "/ferramentas",
+  sistemas: "/sistemas",
+};

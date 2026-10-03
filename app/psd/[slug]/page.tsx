@@ -9,7 +9,8 @@ import { CanvaButton } from "@/components/psd/canva-button";
 import { createClient } from "@/utils/supabase/server";
 import { getPublishedPsdBySlug, getCategories } from "@/lib/psd";
 import { getUserCreditsSummary, computeCtaState } from "@/lib/credits";
-import type { Category } from "@/lib/types/psd";
+import { getSiteSettings } from "@/lib/settings";
+import type { Category, ContentType } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -23,10 +24,13 @@ export default async function PsdDetailPage({ params }: { params: { slug: string
   let isLoggedIn = false;
   let availableCredits: number | null = null;
   let categories: Category[] = [];
+  let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
 
   try {
     const supabase = await createClient();
-    categories = await getCategories(supabase);
+    const [cats, settings] = await Promise.all([getCategories(supabase), getSiteSettings(supabase)]);
+    categories = cats;
+    enabledContentTypes = settings.enabledContentTypes;
   } catch (error) {
     console.error("Falha ao carregar categorias:", error);
   }
@@ -62,7 +66,7 @@ export default async function PsdDetailPage({ params }: { params: { slug: string
   const hasCanva = !!psd.canva_url;
 
   return (
-    <PublicShell categories={categories}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
       <div className="mx-auto max-w-6xl">
         <Link
           href="/psd"

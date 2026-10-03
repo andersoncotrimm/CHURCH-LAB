@@ -6,8 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
 import { getCategories } from "@/lib/psd";
+import { getSiteSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
-import type { Category } from "@/lib/types/psd";
+import type { Category, ContentType } from "@/lib/types/psd";
 import type { Plan } from "@/lib/types/plan";
 
 export const dynamic = "force-dynamic";
@@ -19,23 +20,26 @@ function formatPrice(price: number) {
 export default async function PlanosPage() {
   let typedPlans: Plan[] = [];
   let categories: Category[] = [];
+  let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
 
   try {
     const supabase = await createClient();
 
-    const [{ data: plans }, categoriesData] = await Promise.all([
+    const [{ data: plans }, categoriesData, settings] = await Promise.all([
       supabase.from("plans").select("*").eq("is_active", true).order("display_order", { ascending: true }),
       getCategories(supabase),
+      getSiteSettings(supabase),
     ]);
 
     typedPlans = (plans ?? []) as Plan[];
     categories = categoriesData;
+    enabledContentTypes = settings.enabledContentTypes;
   } catch (error) {
     console.error("Falha ao carregar planos:", error);
   }
 
   return (
-    <PublicShell categories={categories}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-semibold uppercase tracking-widest text-accent">

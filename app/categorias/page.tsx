@@ -3,26 +3,30 @@ import { FolderTree } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { EmptyState } from "@/components/ui/empty-state";
 import { createClient } from "@/utils/supabase/server";
-import type { Category } from "@/lib/types/psd";
+import { getSiteSettings } from "@/lib/settings";
+import type { Category, ContentType } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
 export default async function CategoriasPage() {
   let categories: Category[] = [];
+  let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
   const countByCategory = new Map<string, number>();
 
   try {
     const supabase = await createClient();
 
-    const [{ data: categoriesData }, { data: psdCategoryRows }] = await Promise.all([
+    const [{ data: categoriesData }, { data: psdCategoryRows }, settings] = await Promise.all([
       supabase.from("categories").select("*").order("name", { ascending: true }),
       supabase
         .from("psd_categories")
         .select("category_id, psd_files!inner(is_published)")
         .eq("psd_files.is_published", true),
+      getSiteSettings(supabase),
     ]);
 
     categories = categoriesData ?? [];
+    enabledContentTypes = settings.enabledContentTypes;
     for (const row of psdCategoryRows ?? []) {
       countByCategory.set(row.category_id, (countByCategory.get(row.category_id) ?? 0) + 1);
     }
@@ -31,7 +35,7 @@ export default async function CategoriasPage() {
   }
 
   return (
-    <PublicShell categories={categories}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-semibold uppercase tracking-widest text-accent">

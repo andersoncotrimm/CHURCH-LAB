@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { LayoutGrid, ImageOff } from "lucide-react";
 import { PublicShell } from "@/components/public/public-shell";
 import { PsdCard } from "@/components/psd/psd-card";
@@ -7,6 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getPublishedPsds, getCategories } from "@/lib/psd";
 import { getActiveFilterTypes } from "@/lib/filters";
 import { getUserCreditsSummary } from "@/lib/credits";
+import { getSiteSettings } from "@/lib/settings";
 import type { Category, PsdFile, ContentType } from "@/lib/types/psd";
 import type { FilterType } from "@/lib/filters";
 
@@ -52,6 +54,13 @@ export async function PsdLibraryView({
   let filterTypes: FilterType[] = [];
   let favoritedIds = new Set<string>();
   let availableCredits: number | null = null;
+  let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
+
+  // Fora do try/catch de baixo: notFound() lança um sinal especial que não
+  // pode ser engolido por um catch genérico.
+  const settings = await getSiteSettings(await createClient());
+  enabledContentTypes = settings.enabledContentTypes;
+  if (!settings.enabledContentTypes.includes(contentType)) notFound();
 
   try {
     const supabase = await createClient();
@@ -136,7 +145,7 @@ export async function PsdLibraryView({
   });
 
   return (
-    <PublicShell categories={categories}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>

@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { updateSiteSettings } from "@/app/admin/configuracoes/actions";
 import { resizeImageForUpload } from "@/lib/image-resize";
+import { CONTENT_TYPES } from "@/lib/types/psd";
+import type { ContentType } from "@/lib/types/psd";
 import type { SiteSettings } from "@/lib/settings";
 
 function ColorField({
@@ -95,12 +97,29 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [notifyPlatformUpdates, setNotifyPlatformUpdates] = React.useState(settings.notifyPlatformUpdates);
   const [contactUrl, setContactUrl] = React.useState(settings.contactUrl ?? "");
   const [creditUnitPrice, setCreditUnitPrice] = React.useState(settings.creditUnitPrice);
+  const [enabledContentTypes, setEnabledContentTypes] = React.useState<Set<ContentType>>(
+    new Set(settings.enabledContentTypes)
+  );
+  const [homeContentType, setHomeContentType] = React.useState<ContentType | "">(settings.homeContentType ?? "");
   const [mobileFile, setMobileFile] = React.useState<File | null>(null);
   const [tabletFile, setTabletFile] = React.useState<File | null>(null);
   const [desktopFile, setDesktopFile] = React.useState<File | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
+
+  function toggleContentType(type: ContentType) {
+    setEnabledContentTypes((prev) => {
+      const next = new Set(prev);
+      if (next.has(type)) {
+        next.delete(type);
+        if (homeContentType === type) setHomeContentType("");
+      } else {
+        next.add(type);
+      }
+      return next;
+    });
+  }
 
   async function uploadBackground(file: File, suffix: string): Promise<string> {
     // Redimensiona/comprime antes de subir — a foto original (às vezes vários
@@ -375,6 +394,55 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
         disabled={loading}
         hint='Aparece como botão "Falar com o suporte" em Meus Créditos, junto com os pacotes cadastrados em /admin/creditos. Ainda não existe cobrança automática — a compra é combinada por fora e o crédito é adicionado manualmente.'
       />
+
+      <div className="space-y-3 rounded-lg border border-border p-4">
+        <div>
+          <p className="text-sm font-medium text-foreground">Seções visíveis</p>
+          <p className="text-xs text-muted-foreground">
+            Desligue uma seção pra ela sumir do menu lateral e a página dela ficar indisponível — os itens
+            continuam cadastrados, só não aparecem pro público.
+          </p>
+        </div>
+
+        {CONTENT_TYPES.map((type) => (
+          <label key={type.value} className="flex items-center gap-2 text-sm text-foreground">
+            <input
+              type="checkbox"
+              name={`content_type_enabled_${type.value}`}
+              checked={enabledContentTypes.has(type.value)}
+              onChange={() => toggleContentType(type.value)}
+              disabled={loading}
+              className="h-4 w-4 rounded border-input text-accent focus-visible:ring-2 focus-visible:ring-accent"
+            />
+            {type.label}
+          </label>
+        ))}
+
+        <div className="flex flex-col gap-1.5 pt-1">
+          <label htmlFor="home_content_type" className="text-sm font-medium text-foreground">
+            Página principal
+          </label>
+          <select
+            id="home_content_type"
+            name="home_content_type"
+            value={homeContentType}
+            onChange={(event) => setHomeContentType(event.target.value as ContentType | "")}
+            disabled={loading}
+            className="h-10 w-full rounded-lg border border-input bg-surface px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            <option value="">Padrão (carrossel de destaques + fileiras)</option>
+            {CONTENT_TYPES.filter((type) => enabledContentTypes.has(type.value)).map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs text-muted-foreground">
+            Quem abrir a home ou o dashboard é levado direto pra essa seção, em vez da home padrão. Só pode escolher
+            uma seção ativa.
+          </p>
+        </div>
+      </div>
 
       <Input
         label="Preço por crédito avulso (R$)"

@@ -5,18 +5,25 @@ import Link from "next/link";
 import { Sidebar } from "@/components/ui/sidebar";
 import { PublicHeader } from "@/components/public/public-header";
 import { Logo } from "@/components/brand/logo";
-import { PUBLIC_NAV_ITEMS, withPsdCategories } from "@/lib/nav";
-import type { Category } from "@/lib/types/psd";
+import { PUBLIC_NAV_ITEMS, withPsdCategories, filterByEnabledContentTypes } from "@/lib/nav";
+import type { Category, ContentType } from "@/lib/types/psd";
+
+const ALL_CONTENT_TYPES: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
 
 export function PublicShell({
   children,
   categories = [],
+  enabledContentTypes = ALL_CONTENT_TYPES,
 }: {
   children: React.ReactNode;
   categories?: Category[];
+  enabledContentTypes?: ContentType[];
 }) {
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const items = React.useMemo(() => withPsdCategories(PUBLIC_NAV_ITEMS, categories), [categories]);
+  const items = React.useMemo(
+    () => withPsdCategories(filterByEnabledContentTypes(PUBLIC_NAV_ITEMS, enabledContentTypes), categories),
+    [categories, enabledContentTypes]
+  );
 
   return (
     <div className="glass-root isolate flex min-h-screen">

@@ -13,7 +13,8 @@ import {
   Heart,
 } from "lucide-react";
 import type { SidebarItem } from "@/components/ui/sidebar";
-import type { Category } from "@/lib/types/psd";
+import type { Category, ContentType } from "@/lib/types/psd";
+import { CONTENT_TYPE_ROUTES } from "@/lib/types/psd";
 
 export const APP_NAV_ITEMS: SidebarItem[] = [
   { label: "Início", href: "/dashboard", icon: <Home className="h-[18px] w-[18px]" /> },
@@ -41,6 +42,18 @@ export const PUBLIC_NAV_ITEMS: SidebarItem[] = [
   { label: "Referências", href: "/referencias", icon: <Images className="h-[18px] w-[18px]" /> },
   { label: "Planos", href: "/planos", icon: <Tag className="h-[18px] w-[18px]" />, sectionLabel: "Conta" },
 ];
+
+const ROUTE_TO_CONTENT_TYPE = new Map<string, ContentType>(
+  Object.entries(CONTENT_TYPE_ROUTES).map(([type, href]) => [href, type as ContentType])
+);
+
+/** Remove do menu as seções (PSD/Elementos/Plugins/Ferramentas/Sistemas) que o admin desligou em /admin/configuracoes. */
+export function filterByEnabledContentTypes(items: SidebarItem[], enabledContentTypes: ContentType[]): SidebarItem[] {
+  return items.filter((item) => {
+    const contentType = ROUTE_TO_CONTENT_TYPE.get(item.href);
+    return !contentType || enabledContentTypes.includes(contentType);
+  });
+}
 
 /**
  * Injeta as categorias reais (vindas do banco) como submenu suspenso do

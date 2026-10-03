@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -13,6 +14,7 @@ import { getUserCreditsSummary } from "@/lib/credits";
 import { getPublishedPsds, getFeaturedPsds, getUserFavoritePsds, getFavoritesCounts } from "@/lib/psd";
 import { getSiteSettings } from "@/lib/settings";
 import { getActiveHomeSections } from "@/lib/home-sections";
+import { CONTENT_TYPE_ROUTES } from "@/lib/types/psd";
 
 export const dynamic = "force-dynamic";
 
@@ -37,6 +39,13 @@ export default async function DashboardPage() {
       getSiteSettings(supabase),
       getActiveHomeSections(supabase),
     ]);
+
+  // Página principal escolhida pelo admin em /admin/configuracoes — leva
+  // direto pra seção, em vez do dashboard padrão (carrossel + fileiras).
+  if (settings.homeContentType && settings.enabledContentTypes.includes(settings.homeContentType)) {
+    redirect(CONTENT_TYPE_ROUTES[settings.homeContentType]);
+  }
+
   const availableCredits = credits?.available ?? null;
   const favoritedIds = new Set(favoritePsds.map((p) => p.id));
 

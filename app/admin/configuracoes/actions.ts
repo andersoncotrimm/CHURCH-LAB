@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/utils/supabase/server";
 import { isValidHex } from "@/lib/color";
 import { notifyIfEnabled } from "@/lib/notifications";
+import { CONTENT_TYPES } from "@/lib/types/psd";
+import type { ContentType } from "@/lib/types/psd";
 
 export interface ActionResult {
   error?: string;
@@ -25,6 +27,10 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
   const notifyPlatformUpdates = formData.get("notify_platform_updates") === "on";
   const contactUrl = String(formData.get("contact_url") ?? "").trim();
   const creditUnitPriceRaw = String(formData.get("credit_unit_price") ?? "");
+  const enabledContentTypes = CONTENT_TYPES.map((type) => type.value).filter(
+    (type) => formData.get(`content_type_enabled_${type}`) === "on"
+  );
+  const homeContentTypeRaw = String(formData.get("home_content_type") ?? "").trim();
 
   if (!siteName) return { error: "O nome da plataforma é obrigatório." };
   if (siteName.length > 40) return { error: "Nome muito longo (máx. 40 caracteres)." };
@@ -57,6 +63,13 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
     return { error: "Preço por crédito avulso inválido." };
   }
 
+  const homeContentType: ContentType | null = CONTENT_TYPES.some((type) => type.value === homeContentTypeRaw)
+    ? (homeContentTypeRaw as ContentType)
+    : null;
+  if (homeContentType && !enabledContentTypes.includes(homeContentType)) {
+    return { error: "A página principal escolhida precisa estar entre as seções ativas." };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("site_settings")
@@ -80,6 +93,8 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
       notify_platform_updates: notifyPlatformUpdates,
       contact_url: contactUrl || null,
       credit_unit_price: creditUnitPrice,
+      enabled_content_types: enabledContentTypes,
+      home_content_type: homeContentType,
       updated_at: new Date().toISOString(),
     })
     .eq("id", true);
