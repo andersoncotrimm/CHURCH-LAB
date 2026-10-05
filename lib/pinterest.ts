@@ -4,6 +4,18 @@ export interface PinterestImage {
   imageUrl: string;
 }
 
+// Cabeçalhos parecidos com os de um navegador real — o Pinterest costuma
+// aplicar bloqueio/limite mais rígido em requisições vindas de servidores
+// (datacenter) do que de navegadores de verdade, mesmo pra conteúdo
+// público.
+const BROWSER_LIKE_HEADERS: HeadersInit = {
+  "User-Agent":
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36",
+  Accept: "application/rss+xml, application/xml;q=0.9, text/html;q=0.8, */*;q=0.5",
+  "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+  Referer: "https://www.pinterest.com/",
+};
+
 function decodeHtmlEntities(value: string): string {
   return value
     .replace(/&amp;/g, "&")
@@ -34,7 +46,7 @@ async function resolveShortUrl(url: string): Promise<string> {
   try {
     const response = await fetch(trimmed, {
       redirect: "follow",
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; CHURCH-LAB/1.0)" },
+      headers: BROWSER_LIKE_HEADERS,
     });
     return response.url || trimmed;
   } catch {
@@ -66,7 +78,8 @@ export async function getPinterestBoardImages(boardUrl: string, limit = 60): Pro
     const resolvedUrl = await resolveShortUrl(boardUrl);
     const rssUrl = toRssUrl(resolvedUrl);
     const response = await fetch(rssUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 (compatible; CHURCH-LAB/1.0)" },
+      redirect: "follow",
+      headers: BROWSER_LIKE_HEADERS,
       next: { revalidate: 3600 },
     });
     if (!response.ok) {
