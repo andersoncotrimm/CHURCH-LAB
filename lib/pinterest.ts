@@ -20,6 +20,28 @@ function toRssUrl(boardUrl: string): string {
   return trimmed.endsWith(".rss") ? trimmed : `${trimmed}.rss`;
 }
 
+/**
+ * Links encurtados (pin.it/...), do botão "Compartilhar" do app do
+ * Pinterest, não têm feed RSS próprio — só o board real em pinterest.com
+ * tem. Segue o redirecionamento pra achar a URL completa antes de montar
+ * o link do RSS. Se falhar por qualquer motivo, devolve a URL original
+ * (o fetch do RSS logo depois vai falhar igual e cair na lista vazia).
+ */
+async function resolveShortUrl(url: string): Promise<string> {
+  const trimmed = url.trim();
+  if (!/^https?:\/\/pin\.it\//i.test(trimmed)) return trimmed;
+
+  try {
+    const response = await fetch(trimmed, {
+      redirect: "follow",
+      headers: { "User-Agent": "Mozilla/5.0 (compatible; CHURCH-LAB/1.0)" },
+    });
+    return response.url || trimmed;
+  } catch {
+    return trimmed;
+  }
+}
+
 function extractImageUrl(itemXml: string): string | null {
   const media = /<media:content[^>]*url="([^"]+)"/i.exec(itemXml);
   if (media) return media[1];
@@ -41,15 +63,27 @@ function extractImageUrl(itemXml: string): string | null {
  */
 export async function getPinterestBoardImages(boardUrl: string, limit = 60): Promise<PinterestImage[]> {
   try {
-    const rssUrl = toRssUrl(boardUrl);
+    const resolvedUrl = await resolveShortUrl(boardUrl);
+    const rssUrl = toRssUrl(resolvedUrl);
     const response = await fetch(rssUrl, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; CHURCH-LAB/1.0)" },
       next: { revalidate: 3600 },
     });
-    if (!response.ok) return [];
+    if (!response.ok) {
+      console.error(
+        `Feed RSS do Pinterest (${rssUrl}) retornou ${response.status}. Confirme que o board é público (não secreto) e que o link está correto.`
+      );
+      return [];
+    }
 
     const xml = await response.text();
     const items = xml.match(/<item>[\s\S]*?<\/item>/g) ?? [];
+
+    if (items.length === 0) {
+      console.error(
+        `Feed RSS do Pinterest (${rssUrl}) respondeu OK mas sem nenhum <item> — board vazio, renomeado, ou o Pinterest devolveu uma página diferente do RSS esperado (ex: tela de login).`
+      );
+    }
 
     const images: PinterestImage[] = [];
     for (const itemXml of items) {

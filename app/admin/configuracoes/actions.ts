@@ -42,8 +42,10 @@ export async function updateSiteSettings(formData: FormData): Promise<ActionResu
     return { error: "Tempo de cada slide inválido (use um número inteiro entre 2 e 60 segundos)." };
   }
 
-  if (referencePinterestUrl && !/^https:\/\/(www\.)?pinterest\./.test(referencePinterestUrl)) {
-    return { error: "Link do Pinterest inválido — precisa começar com https://pinterest.com/ ou https://www.pinterest.com/" };
+  if (referencePinterestUrl && !/^https:\/\/((www\.)?pinterest\.[a-z.]+|pin\.it)\//.test(referencePinterestUrl)) {
+    return {
+      error: "Link do Pinterest inválido — precisa começar com https://pinterest.com/, https://www.pinterest.com/ ou https://pin.it/",
+    };
   }
 
   const glassOpacity = Number(glassOpacityRaw);
