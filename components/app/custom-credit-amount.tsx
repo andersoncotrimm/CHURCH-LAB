@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Minus, Plus, MessageCircle, Zap } from "lucide-react";
+import { Minus, Plus, MessageCircle, Zap, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { startCreditCheckout } from "@/app/actions/checkout";
 
 const STEP = 10;
 const MIN = 10;
@@ -14,9 +15,21 @@ function formatPrice(price: number) {
 
 export function CustomCreditAmount({ unitPrice, contactUrl }: { unitPrice: number; contactUrl: string | null }) {
   const [amount, setAmount] = React.useState(STEP);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
   function clamp(value: number) {
     return Math.min(MAX, Math.max(MIN, value));
+  }
+
+  async function handleBuy() {
+    setLoading(true);
+    setError(null);
+    const result = await startCreditCheckout({ customAmount: amount });
+    if (result.error) {
+      setError(result.error);
+      setLoading(false);
+    }
   }
 
   return (
@@ -51,11 +64,22 @@ export function CustomCreditAmount({ unitPrice, contactUrl }: { unitPrice: numbe
         Total: <span className="font-semibold text-foreground">{formatPrice(amount * unitPrice)}</span>
       </p>
 
+      {error && (
+        <p className="flex items-start gap-1.5 text-xs text-danger">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
+
+      <Button variant="accent" className="mt-1 w-full" onClick={handleBuy} loading={loading}>
+        Comprar com Mercado Pago
+      </Button>
+
       {contactUrl && (
-        <a href={contactUrl} target="_blank" rel="noopener noreferrer" className="mt-1">
-          <Button variant="accent" className="w-full">
+        <a href={contactUrl} target="_blank" rel="noopener noreferrer">
+          <Button variant="outline" className="w-full">
             <MessageCircle className="h-4 w-4" />
-            Falar com o suporte
+            Prefiro outra forma de pagamento
           </Button>
         </a>
       )}

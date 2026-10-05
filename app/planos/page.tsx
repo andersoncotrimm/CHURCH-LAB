@@ -8,6 +8,7 @@ import { createClient } from "@/utils/supabase/server";
 import { getCategories } from "@/lib/psd";
 import { getSiteSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
+import { SubscribeButton } from "@/components/app/subscribe-button";
 import type { Category, ContentType } from "@/lib/types/psd";
 import type { Plan } from "@/lib/types/plan";
 
@@ -21,19 +22,24 @@ export default async function PlanosPage() {
   let typedPlans: Plan[] = [];
   let categories: Category[] = [];
   let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
+  let isLoggedIn = false;
 
   try {
     const supabase = await createClient();
 
-    const [{ data: plans }, categoriesData, settings] = await Promise.all([
+    const [{ data: plans }, categoriesData, settings, {
+      data: { user },
+    }] = await Promise.all([
       supabase.from("plans").select("*").eq("is_active", true).order("display_order", { ascending: true }),
       getCategories(supabase),
       getSiteSettings(supabase),
+      supabase.auth.getUser(),
     ]);
 
     typedPlans = (plans ?? []) as Plan[];
     categories = categoriesData;
     enabledContentTypes = settings.enabledContentTypes;
+    isLoggedIn = !!user;
   } catch (error) {
     console.error("Falha ao carregar planos:", error);
   }
@@ -109,15 +115,19 @@ export default async function PlanosPage() {
                   </ul>
                 )}
 
-                <Link
-                  href="/login"
-                  className={cn(
-                    buttonVariants({ variant: plan.is_featured ? "accent" : "outline", size: "lg" }),
-                    "mt-8 w-full"
-                  )}
-                >
-                  Começar agora
-                </Link>
+                {isLoggedIn ? (
+                  <SubscribeButton planId={plan.id} isFeatured={plan.is_featured} />
+                ) : (
+                  <Link
+                    href="/login"
+                    className={cn(
+                      buttonVariants({ variant: plan.is_featured ? "accent" : "outline", size: "lg" }),
+                      "mt-8 w-full"
+                    )}
+                  >
+                    Entrar pra assinar
+                  </Link>
+                )}
               </div>
             ))}
           </div>

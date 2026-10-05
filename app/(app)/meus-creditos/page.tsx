@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { Zap, Calendar, TrendingDown, TrendingUp, History, ShoppingCart, MessageCircle } from "lucide-react";
+import { Zap, Calendar, TrendingDown, TrendingUp, History, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CustomCreditAmount } from "@/components/app/custom-credit-amount";
+import { BuyCreditPackageButton } from "@/components/app/buy-credit-package-button";
 import { createClient } from "@/utils/supabase/server";
 import { getUserCreditsSummary } from "@/lib/credits";
 import { getSiteSettings } from "@/lib/settings";
@@ -130,8 +131,8 @@ export default async function MeusCreditosPage() {
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
             Precisa de mais créditos antes do fim do ciclo? Escolha um pacote pronto ou monte a sua própria
-            quantidade, e fale com o suporte pra finalizar — os créditos são adicionados na sua conta assim que o
-            pagamento for confirmado.
+            quantidade — o pagamento é processado pelo Mercado Pago e os créditos entram na sua conta
+            automaticamente assim que for aprovado.
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {creditPackages.map((pkg) => (
@@ -142,14 +143,7 @@ export default async function MeusCreditosPage() {
                   {pkg.credits_amount} créditos
                 </p>
                 <p className="text-sm text-muted-foreground">{formatPrice(pkg.price)}</p>
-                {settings.contactUrl && (
-                  <a href={settings.contactUrl} target="_blank" rel="noopener noreferrer" className="mt-1">
-                    <Button variant="accent" className="w-full">
-                      <MessageCircle className="h-4 w-4" />
-                      Comprar
-                    </Button>
-                  </a>
-                )}
+                <BuyCreditPackageButton packageId={pkg.id} />
               </div>
             ))}
 
