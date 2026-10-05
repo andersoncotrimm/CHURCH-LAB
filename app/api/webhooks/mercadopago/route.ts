@@ -14,13 +14,25 @@ interface MpWebhookBody {
 
 /**
  * Recebe as notificações do Mercado Pago configuradas em Suas integrações >
- * [app] > Webhooks (eventos: Pagamentos, Assinaturas/preapproval, Cobranças
- * de assinaturas/authorized_payment). Verifica a assinatura antes de
- * processar qualquer coisa — sem isso, qualquer um poderia chamar esta rota
- * fingindo um pagamento aprovado.
+ * [app] > Webhooks (eventos: "Planos e assinaturas" cobre preapproval +
+ * authorized_payment; "Pagamentos (legacy)" manda o tipo como `topic` em
+ * vez de `type`/`data.id`, formato mais antigo — por isso aceitamos as
+ * duas formas, tanto no corpo quanto na query string). Verifica a
+ * assinatura antes de processar qualquer coisa — sem isso, qualquer um
+ * poderia chamar esta rota fingindo um pagamento aprovado.
  */
 export async function POST(request: NextRequest) {
-  const rawBody = await request.text();
+  return handleWebhookRequest(request);
+}
+
+// O formato "legacy" historicamente podia chegar como GET — aceitamos
+// também, pelo mesmo caminho (só processa se tiver dataId + type válidos).
+export async function GET(request: NextRequest) {
+  return handleWebhookRequest(request);
+}
+
+async function handleWebhookRequest(request: NextRequest) {
+  const rawBody = request.method === "POST" ? await request.text() : "";
 
   let body: MpWebhookBody = {};
   try {
@@ -30,8 +42,10 @@ export async function POST(request: NextRequest) {
   }
 
   const url = new URL(request.url);
-  const dataId = body.data?.id ?? url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? "";
-  const type = body.type ?? body.topic ?? url.searchParams.get("type") ?? "";
+  const dataId =
+    body.data?.id ?? url.searchParams.get("data.id") ?? url.searchParams.get("id") ?? "";
+  const type =
+    body.type ?? body.topic ?? url.searchParams.get("type") ?? url.searchParams.get("topic") ?? "";
 
   if (!dataId || !type) {
     // Notificação sem informação acionável (ex.: ping de teste) — nada a fazer.
