@@ -11,6 +11,7 @@ import {
   UserCircle,
   Download,
   Heart,
+  ShieldCheck,
 } from "lucide-react";
 import type { SidebarItem } from "@/components/ui/sidebar";
 import type { Category, ContentType } from "@/lib/types/psd";
@@ -42,6 +43,13 @@ export const PUBLIC_NAV_ITEMS: SidebarItem[] = [
   { label: "Referências", href: "/referencias", icon: <Images className="h-[18px] w-[18px]" /> },
   { label: "Planos", href: "/planos", icon: <Tag className="h-[18px] w-[18px]" />, sectionLabel: "Conta" },
 ];
+
+export const ADMIN_LINK_ITEM: SidebarItem = {
+  label: "Painel Admin",
+  href: "/admin",
+  icon: <ShieldCheck className="h-[18px] w-[18px]" />,
+  sectionLabel: "Administração",
+};
 
 const ROUTE_TO_CONTENT_TYPE = new Map<string, ContentType>(
   Object.entries(CONTENT_TYPE_ROUTES).map(([type, href]) => [href, type as ContentType])

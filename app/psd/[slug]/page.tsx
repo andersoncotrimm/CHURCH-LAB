@@ -10,7 +10,9 @@ import { createClient } from "@/utils/supabase/server";
 import { getPublishedPsdBySlug, getCategories } from "@/lib/psd";
 import { getUserCreditsSummary, computeCtaState } from "@/lib/credits";
 import { getSiteSettings } from "@/lib/settings";
+import { getShellContext } from "@/lib/shell-context";
 import type { Category, ContentType } from "@/lib/types/psd";
+import type { ShellContext } from "@/lib/shell-context";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +27,18 @@ export default async function PsdDetailPage({ params }: { params: { slug: string
   let availableCredits: number | null = null;
   let categories: Category[] = [];
   let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
+  let shellContext: ShellContext = { isLoggedIn: false, user: null, planName: null, credits: null, isAdmin: false };
 
   try {
     const supabase = await createClient();
-    const [cats, settings] = await Promise.all([getCategories(supabase), getSiteSettings(supabase)]);
+    const [cats, settings, shell] = await Promise.all([
+      getCategories(supabase),
+      getSiteSettings(supabase),
+      getShellContext(supabase),
+    ]);
     categories = cats;
     enabledContentTypes = settings.enabledContentTypes;
+    shellContext = shell;
   } catch (error) {
     console.error("Falha ao carregar categorias:", error);
   }
@@ -66,7 +74,7 @@ export default async function PsdDetailPage({ params }: { params: { slug: string
   const hasCanva = !!psd.canva_url;
 
   return (
-    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes} shell={shellContext}>
       <div className="mx-auto max-w-6xl">
         <Link
           href="/psd"

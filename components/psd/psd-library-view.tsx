@@ -9,8 +9,10 @@ import { getPublishedPsds, getCategories } from "@/lib/psd";
 import { getActiveFilterTypes } from "@/lib/filters";
 import { getUserCreditsSummary } from "@/lib/credits";
 import { getSiteSettings } from "@/lib/settings";
+import { getShellContext } from "@/lib/shell-context";
 import type { Category, PsdFile, ContentType } from "@/lib/types/psd";
 import type { FilterType } from "@/lib/filters";
+import type { ShellContext } from "@/lib/shell-context";
 
 export interface PsdLibrarySearchParams {
   categoria?: string;
@@ -55,6 +57,7 @@ export async function PsdLibraryView({
   let favoritedIds = new Set<string>();
   let availableCredits: number | null = null;
   let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
+  let shellContext: ShellContext = { isLoggedIn: false, user: null, planName: null, credits: null, isAdmin: false };
 
   // Fora do try/catch de baixo: notFound() lança um sinal especial que não
   // pode ser engolido por um catch genérico.
@@ -69,6 +72,7 @@ export async function PsdLibraryView({
       data: { user },
     } = await supabase.auth.getUser();
     userId = user?.id ?? null;
+    shellContext = await getShellContext(supabase);
 
     [allPsds, categories, filterTypes] = await Promise.all([
       getPublishedPsds(supabase, contentType),
@@ -145,7 +149,7 @@ export async function PsdLibraryView({
   });
 
   return (
-    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes} shell={shellContext}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">{title}</h1>

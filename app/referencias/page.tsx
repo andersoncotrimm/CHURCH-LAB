@@ -5,8 +5,10 @@ import { createClient } from "@/utils/supabase/server";
 import { getCategories } from "@/lib/psd";
 import { getSiteSettings } from "@/lib/settings";
 import { getPinterestBoardImages } from "@/lib/pinterest";
+import { getShellContext } from "@/lib/shell-context";
 import type { Category, ContentType } from "@/lib/types/psd";
 import type { PinterestImage } from "@/lib/pinterest";
+import type { ShellContext } from "@/lib/shell-context";
 
 export const dynamic = "force-dynamic";
 
@@ -15,20 +17,26 @@ export default async function ReferenciasPage() {
   let images: PinterestImage[] = [];
   let boardUrl: string | null = null;
   let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
+  let shellContext: ShellContext = { isLoggedIn: false, user: null, planName: null, credits: null, isAdmin: false };
 
   try {
     const supabase = await createClient();
-    const [cats, settings] = await Promise.all([getCategories(supabase), getSiteSettings(supabase)]);
+    const [cats, settings, shell] = await Promise.all([
+      getCategories(supabase),
+      getSiteSettings(supabase),
+      getShellContext(supabase),
+    ]);
     categories = cats;
     boardUrl = settings.referencePinterestUrl;
     enabledContentTypes = settings.enabledContentTypes;
+    shellContext = shell;
     if (boardUrl) images = await getPinterestBoardImages(boardUrl);
   } catch (error) {
     console.error("Falha ao carregar a página de referências:", error);
   }
 
   return (
-    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes} shell={shellContext}>
       <div className="mx-auto max-w-6xl">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Referências</h1>

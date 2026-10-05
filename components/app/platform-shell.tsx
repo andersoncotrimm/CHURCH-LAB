@@ -3,15 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShieldCheck } from "lucide-react";
 import { Sidebar } from "@/components/ui/sidebar";
 import { PlatformHeader } from "@/components/app/platform-header";
 import { Avatar } from "@/components/ui/avatar";
 import { Logo } from "@/components/brand/logo";
-import { APP_NAV_ITEMS, withPsdCategories, filterByEnabledContentTypes } from "@/lib/nav";
+import { APP_NAV_ITEMS, ADMIN_LINK_ITEM, withPsdCategories, filterByEnabledContentTypes } from "@/lib/nav";
 import { createClient } from "@/utils/supabase/client";
 import type { Category, ContentType } from "@/lib/types/psd";
-import type { SidebarItem } from "@/components/ui/sidebar";
 
 const ALL_CONTENT_TYPES: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
 
@@ -24,13 +22,6 @@ export interface PlatformShellProps {
   isAdmin?: boolean;
   children: React.ReactNode;
 }
-
-const ADMIN_LINK_ITEM: SidebarItem = {
-  label: "Painel Admin",
-  href: "/admin",
-  icon: <ShieldCheck className="h-[18px] w-[18px]" />,
-  sectionLabel: "Administração",
-};
 
 export function PlatformShell({
   user,

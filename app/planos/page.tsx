@@ -9,8 +9,10 @@ import { getCategories } from "@/lib/psd";
 import { getSiteSettings } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { SubscribeButton } from "@/components/app/subscribe-button";
+import { getShellContext } from "@/lib/shell-context";
 import type { Category, ContentType } from "@/lib/types/psd";
 import type { Plan } from "@/lib/types/plan";
+import type { ShellContext } from "@/lib/shell-context";
 
 export const dynamic = "force-dynamic";
 
@@ -22,30 +24,30 @@ export default async function PlanosPage() {
   let typedPlans: Plan[] = [];
   let categories: Category[] = [];
   let enabledContentTypes: ContentType[] = ["psd", "elementos", "plugins", "ferramentas", "sistemas"];
-  let isLoggedIn = false;
+  let shellContext: ShellContext = { isLoggedIn: false, user: null, planName: null, credits: null, isAdmin: false };
 
   try {
     const supabase = await createClient();
 
-    const [{ data: plans }, categoriesData, settings, {
-      data: { user },
-    }] = await Promise.all([
+    const [{ data: plans }, categoriesData, settings, shell] = await Promise.all([
       supabase.from("plans").select("*").eq("is_active", true).order("display_order", { ascending: true }),
       getCategories(supabase),
       getSiteSettings(supabase),
-      supabase.auth.getUser(),
+      getShellContext(supabase),
     ]);
 
     typedPlans = (plans ?? []) as Plan[];
     categories = categoriesData;
     enabledContentTypes = settings.enabledContentTypes;
-    isLoggedIn = !!user;
+    shellContext = shell;
   } catch (error) {
     console.error("Falha ao carregar planos:", error);
   }
 
+  const isLoggedIn = shellContext.isLoggedIn;
+
   return (
-    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
+    <PublicShell categories={categories} enabledContentTypes={enabledContentTypes} shell={shellContext}>
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
           <span className="text-xs font-semibold uppercase tracking-widest text-accent">
