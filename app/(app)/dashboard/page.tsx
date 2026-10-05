@@ -55,7 +55,11 @@ export default async function DashboardPage() {
       ? featuredPsds
       : [...allPsds].sort((a, b) => b.downloadsCount - a.downloadsCount).slice(0, 1);
 
-  const excludeIds = new Set([continueItem?.id, ...heroItems.map((p) => p.id)].filter(Boolean) as string[]);
+  // Só exclui os itens do carrossel de destaques (pra não repetir o mesmo
+  // card ali e numa fileira logo abaixo). O item de "Continuar de onde
+  // parou" continua aparecendo nas fileiras normalmente — baixar um
+  // material não deve tirá-lo de circulação.
+  const excludeIds = new Set(heroItems.map((p) => p.id));
   const rest = allPsds.filter((p) => !excludeIds.has(p.id));
   const favoritesCounts = await getFavoritesCounts(supabase, rest.map((p) => p.id));
 
