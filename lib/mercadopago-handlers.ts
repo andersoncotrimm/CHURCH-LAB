@@ -13,39 +13,55 @@ import { getPayment, getPreapproval, getAuthorizedPayment } from "@/lib/mercadop
  */
 
 // ---------------------------------------------------------------------------
-// Créditos extras avulsos (Checkout Pro / "payment")
+// Pagamento avulso (Checkout Pro / "payment") — pode ser créditos extras OU
+// um plano pago via Pix (um ciclo por vez, ver handlePixPlanPayment).
+// external_reference aponta pra credit_purchases OU subscription_checkouts
+// dependendo de qual fluxo gerou a cobrança; tenta os dois.
 // ---------------------------------------------------------------------------
 
 export async function handlePayment(supabase: SupabaseClient, paymentId: string): Promise<void> {
   const payment = await getPayment(paymentId);
   if (payment.status !== "approved") return;
 
-  const purchaseId = payment.external_reference;
-  if (!purchaseId) return;
+  const referenceId = payment.external_reference;
+  if (!referenceId) return;
 
+  const handledAsCreditPurchase = await handleCreditPurchasePayment(supabase, referenceId, payment.id);
+  if (handledAsCreditPurchase) return;
+
+  await handlePixPlanPayment(supabase, referenceId, payment.id);
+}
+
+/** Retorna true se referenceId pertence a credit_purchases (processado ou não — só indica que achou a linha certa). */
+async function handleCreditPurchasePayment(
+  supabase: SupabaseClient,
+  purchaseId: string,
+  mpPaymentId: number
+): Promise<boolean> {
   const { data: purchase } = await supabase
     .from("credit_purchases")
     .select("id, user_id, credits_amount, status")
     .eq("id", purchaseId)
     .maybeSingle();
 
-  if (!purchase || purchase.status !== "pending") return;
+  if (!purchase) return false;
+  if (purchase.status !== "pending") return true;
 
   // Só marca approved se ainda estiver pending — evita duas notificações
   // concorrentes creditarem duas vezes.
   const { data: updated, error: updateError } = await supabase
     .from("credit_purchases")
-    .update({ status: "approved", mp_payment_id: String(payment.id), updated_at: new Date().toISOString() })
+    .update({ status: "approved", mp_payment_id: String(mpPaymentId), updated_at: new Date().toISOString() })
     .eq("id", purchase.id)
     .eq("status", "pending")
     .select("id")
     .maybeSingle();
 
   if (updateError) {
-    if (updateError.code === "23505") return; // mp_payment_id já usado por outra notificação
+    if (updateError.code === "23505") return true; // mp_payment_id já usado por outra notificação
     throw updateError;
   }
-  if (!updated) return;
+  if (!updated) return true;
 
   await grantBonusCredits(
     supabase,
@@ -53,6 +69,34 @@ export async function handlePayment(supabase: SupabaseClient, paymentId: string)
     purchase.credits_amount,
     `Compra de ${purchase.credits_amount} créditos extras`
   );
+  return true;
+}
+
+/** Plano pago via Pix: cobrança avulsa (não recorrente) que ativa um ciclo igual à autorização de uma assinatura por cartão. */
+async function handlePixPlanPayment(supabase: SupabaseClient, checkoutId: string, mpPaymentId: number): Promise<void> {
+  const { data: checkout } = await supabase
+    .from("subscription_checkouts")
+    .select("id, user_id, plan_id, status, payment_method")
+    .eq("id", checkoutId)
+    .maybeSingle();
+
+  if (!checkout || checkout.payment_method !== "pix" || checkout.status !== "pending") return;
+
+  const { data: updated, error: updateError } = await supabase
+    .from("subscription_checkouts")
+    .update({ status: "authorized", mp_payment_id: String(mpPaymentId), updated_at: new Date().toISOString() })
+    .eq("id", checkout.id)
+    .eq("status", "pending")
+    .select("id")
+    .maybeSingle();
+
+  if (updateError) {
+    if (updateError.code === "23505") return;
+    throw updateError;
+  }
+  if (!updated) return;
+
+  await activateSubscription(supabase, checkout.user_id, checkout.plan_id, null);
 }
 
 async function grantBonusCredits(
@@ -154,10 +198,10 @@ async function activateSubscription(
   supabase: SupabaseClient,
   userId: string,
   planId: string,
-  preapprovalId: string
+  preapprovalId: string | null
 ): Promise<void> {
   const { data: plan } = await supabase.from("plans").select("*").eq("id", planId).single();
-  if (!plan) throw new Error(`Plano ${planId} não encontrado ao ativar assinatura ${preapprovalId}.`);
+  if (!plan) throw new Error(`Plano ${planId} não encontrado ao ativar assinatura (preapproval=${preapprovalId ?? "pix"}).`);
 
   // Troca de plano: fecha qualquer assinatura/ciclo ativo anterior do
   // usuário antes de abrir o novo (nunca duas assinaturas ativas ao mesmo

@@ -43,6 +43,12 @@ export interface MpPreferenceParams {
   backUrls: { success: string; pending: string; failure: string };
   notificationUrl: string;
   payerEmail?: string;
+  /**
+   * Tipos de pagamento a esconder do checkout (ex: ["credit_card", "debit_card", "ticket"]
+   * pra deixar só Pix disponível). Sem isso, o Checkout Pro mostra todos os
+   * métodos ativados na conta — cartão, Pix e boleto — por padrão.
+   */
+  excludedPaymentTypes?: string[];
 }
 
 export interface MpPreferenceResult {
@@ -67,6 +73,9 @@ export async function createPaymentPreference(params: MpPreferenceParams): Promi
       auto_return: "approved",
       notification_url: params.notificationUrl,
       payer: params.payerEmail ? { email: params.payerEmail } : undefined,
+      payment_methods: params.excludedPaymentTypes
+        ? { excluded_payment_types: params.excludedPaymentTypes.map((id) => ({ id })) }
+        : undefined,
     }),
   });
 }

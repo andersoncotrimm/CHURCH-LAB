@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CustomCreditAmount } from "@/components/app/custom-credit-amount";
 import { BuyCreditPackageButton } from "@/components/app/buy-credit-package-button";
+import { RenewPlanPixButton } from "@/components/app/renew-plan-pix-button";
 import { createClient } from "@/utils/supabase/server";
 import { getUserCreditsSummary } from "@/lib/credits";
 import { getSiteSettings } from "@/lib/settings";
@@ -110,14 +111,36 @@ export default async function MeusCreditosPage() {
             </Card>
           </div>
 
-          {credits.periodEnd && (
+          {credits.periodEnd && credits.autoRenews && (
             <div className="flex items-center gap-2 rounded-lg border border-border bg-surface p-4 text-sm text-muted-foreground">
               <Calendar className="h-4 w-4" />
-              Renovação em{" "}
+              Renovação automática em{" "}
               {new Date(credits.periodEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
               . Créditos não utilizados não acumulam para o próximo ciclo.
             </div>
           )}
+
+          {credits.periodEnd && !credits.autoRenews && credits.planId && (() => {
+            const daysLeft = Math.ceil((new Date(credits.periodEnd).getTime() - Date.now()) / (24 * 60 * 60 * 1000));
+            const expiringSoon = daysLeft <= 5;
+            return (
+              <div
+                className={`flex flex-col gap-3 rounded-lg border p-4 text-sm sm:flex-row sm:items-center sm:justify-between ${
+                  expiringSoon ? "border-warning/40 bg-warning/5 text-foreground" : "border-border bg-surface text-muted-foreground"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 shrink-0" />
+                  <span>
+                    Plano pago via Pix — {expiringSoon ? "vence" : "válido até"}{" "}
+                    {new Date(credits.periodEnd).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}
+                    . Não renova sozinho: pague de novo pra continuar.
+                  </span>
+                </div>
+                <RenewPlanPixButton planId={credits.planId} />
+              </div>
+            );
+          })()}
         </>
       )}
 
@@ -131,8 +154,8 @@ export default async function MeusCreditosPage() {
         <CardContent className="flex flex-col gap-4">
           <p className="text-sm text-muted-foreground">
             Precisa de mais créditos antes do fim do ciclo? Escolha um pacote pronto ou monte a sua própria
-            quantidade — o pagamento é processado pelo Mercado Pago e os créditos entram na sua conta
-            automaticamente assim que for aprovado.
+            quantidade — o pagamento é processado pelo Mercado Pago (Pix, cartão ou boleto, você escolhe na hora de
+            pagar) e os créditos entram na sua conta automaticamente assim que for aprovado.
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {creditPackages.map((pkg) => (

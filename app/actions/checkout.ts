@@ -40,7 +40,7 @@ export async function startPlanCheckout(planId: string): Promise<CheckoutResult>
 
   const { data: checkout, error: checkoutError } = await supabase
     .from("subscription_checkouts")
-    .insert({ user_id: user.id, plan_id: plan.id, status: "pending" })
+    .insert({ user_id: user.id, plan_id: plan.id, status: "pending", payment_method: "card" })
     .select("id")
     .single();
 
@@ -68,6 +68,73 @@ export async function startPlanCheckout(planId: string): Promise<CheckoutResult>
   await supabase.from("subscription_checkouts").update({ mp_preapproval_id: preapproval.id }).eq("id", checkout.id);
 
   redirect(preapproval.init_point);
+}
+
+/**
+ * Cobra UM ciclo do plano via Pix (cobrança avulsa, não recorrente — o
+ * Mercado Pago não tem débito automático via Pix). O plano fica ativo até
+ * o fim do período pago; pra continuar depois disso, a pessoa paga de novo
+ * (ver banner de renovação em /meus-creditos). Vira plano ativo de verdade
+ * quando o webhook confirma o pagamento aprovado — ver
+ * lib/mercadopago-handlers.ts.
+ */
+export async function startPlanPixCheckout(planId: string): Promise<CheckoutResult> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || !user.email) {
+    return { error: "Você precisa estar logado com um e-mail válido pra assinar um plano." };
+  }
+
+  const { data: plan } = await supabase.from("plans").select("*").eq("id", planId).eq("is_active", true).maybeSingle();
+  if (!plan) return { error: "Plano não encontrado." };
+
+  if (plan.price <= 0) {
+    return { error: "Este plano não tem cobrança automática configurada. Fale com o suporte." };
+  }
+
+  const { data: checkout, error: checkoutError } = await supabase
+    .from("subscription_checkouts")
+    .insert({ user_id: user.id, plan_id: plan.id, status: "pending", payment_method: "pix" })
+    .select("id")
+    .single();
+
+  if (checkoutError || !checkout) {
+    return { error: "Não foi possível iniciar o pagamento. Tente novamente." };
+  }
+
+  const origin = await getSiteOrigin();
+  const periodLabel = plan.billing_interval === "yearly" ? "1 ano" : "1 mês";
+
+  let preference;
+  try {
+    preference = await createPaymentPreference({
+      title: `Plano ${plan.name} (${periodLabel}) — CHURCH-LAB`,
+      quantity: 1,
+      unitPrice: plan.price,
+      externalReference: checkout.id,
+      backUrls: {
+        success: `${origin}/planos?checkout=sucesso`,
+        pending: `${origin}/planos?checkout=pendente`,
+        failure: `${origin}/planos?checkout=falhou`,
+      },
+      notificationUrl: `${origin}/api/webhooks/mercadopago`,
+      payerEmail: user.email,
+      // Só Pix aqui — cartão já tem o fluxo de assinatura de verdade (que
+      // auto-renova); misturar os dois nessa tela confundiria qual é qual.
+      excludedPaymentTypes: ["credit_card", "debit_card", "ticket"],
+    });
+  } catch (error) {
+    console.error("Falha ao criar cobrança Pix no Mercado Pago:", error);
+    return { error: "Não foi possível iniciar o pagamento. Tente novamente em instantes." };
+  }
+
+  await supabase.from("subscription_checkouts").update({ mp_preference_id: preference.id }).eq("id", checkout.id);
+
+  redirect(preference.init_point);
 }
 
 export interface StartCreditCheckoutParams {
