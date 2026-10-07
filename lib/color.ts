@@ -39,6 +39,23 @@ export function shiftLightness(hslTriple: string, deltaPoints: number): string {
   return `${h} ${s} ${lightness}%`;
 }
 
+/** true se a luminosidade da tripla "H S% L%" for menor que 50%. */
+export function isDarkTriple(hslTriple: string): boolean {
+  return parseInt(hslTriple.split(" ")[2], 10) < 50;
+}
+
+/**
+ * Desloca a luminosidade pra "longe" do fundo, não só pra cima — clareia
+ * quando o fundo é escuro (tema atual) e escurece quando o fundo é claro,
+ * pra superfície/borda continuarem visíveis como uma camada por cima do
+ * fundo nos dois casos. `shiftLightness` sozinha só clareia, o que faz
+ * sentido pra fundo escuro mas deixa tudo branco-sobre-branco se o admin
+ * escolher um fundo claro.
+ */
+export function layerLightness(backgroundHslTriple: string, deltaPoints: number): string {
+  return shiftLightness(backgroundHslTriple, isDarkTriple(backgroundHslTriple) ? deltaPoints : -deltaPoints);
+}
+
 /** "Preto" ou "branco" (como tripla HSL) — o que der mais contraste sobre a cor informada. */
 export function contrastingForeground(hex: string): string {
   const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex.trim());

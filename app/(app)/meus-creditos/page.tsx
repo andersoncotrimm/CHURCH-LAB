@@ -159,7 +159,7 @@ export default async function MeusCreditosPage() {
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {creditPackages.map((pkg) => (
-              <div key={pkg.id} className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+              <div key={pkg.id} className="glass-card flex flex-col gap-2 rounded-xl p-4">
                 <p className="text-sm font-semibold text-foreground">{pkg.name}</p>
                 <p className="flex items-center gap-1.5 text-xl font-semibold text-foreground">
                   <Zap className="h-4 w-4 text-accent" />

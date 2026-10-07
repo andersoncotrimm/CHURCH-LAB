@@ -44,7 +44,7 @@ function PsdCard({ psd, isFavorited = false, isLoggedIn, availableCredits = null
       <button
         type="button"
         onClick={() => setDetailsOpen(true)}
-        className="group flex w-full flex-col overflow-hidden rounded-2xl border border-border bg-surface text-left shadow-card transition-all hover:-translate-y-1 hover:border-accent-300/40 hover:shadow-floating"
+        className="glass-card group flex w-full flex-col overflow-hidden rounded-2xl text-left shadow-card transition-all hover:-translate-y-1 hover:border-accent-300/40 hover:shadow-floating"
       >
         <div className={cn("relative w-full overflow-hidden bg-muted", cardShapeAspect)}>
           {psd.thumbnail_url ? (

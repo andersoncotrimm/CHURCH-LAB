@@ -140,6 +140,29 @@
   }
 
   /*
+   * Card de vidro com reflexo — usa as mesmas variáveis de transparência
+   * do vidro da sidebar/cabeçalho (--glass-rgb/--glass-alpha, controladas
+   * em /admin/configuracoes), mais um brilho diagonal no canto superior
+   * esquerdo (::before) simulando o reflexo de luz num vidro de verdade.
+   */
+  .glass-card {
+    position: relative;
+    isolation: isolate;
+    background-color: rgb(var(--glass-rgb) / var(--glass-alpha));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgb(var(--glass-rgb) / 0.14);
+  }
+
+  .glass-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: linear-gradient(135deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 42%);
+  }
+
+  /*
    * Slider de faixa (dois <input type="range"> sobrepostos) usado no
    * filtro de créditos. A trilha nativa fica transparente/sem eventos de
    * ponteiro — só o "thumb" (bolinha) é clicável/arrastável, deixando os

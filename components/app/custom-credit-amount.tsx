@@ -33,7 +33,7 @@ export function CustomCreditAmount({ unitPrice, contactUrl }: { unitPrice: numbe
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-xl border border-dashed border-border bg-surface p-4">
+    <div className="glass-card flex flex-col gap-2 rounded-xl border-dashed p-4">
       <p className="text-sm font-semibold text-foreground">Quantidade personalizada</p>
       <p className="text-xs text-muted-foreground">Escolha quantos créditos quer comprar.</p>
 

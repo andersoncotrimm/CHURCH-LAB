@@ -3,7 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/utils/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
-import { hexToHslTriple, shiftLightness, contrastingForeground, buildAccentScale } from "@/lib/color";
+import { hexToHslTriple, layerLightness, contrastingForeground, shiftLightness, isDarkTriple, buildAccentScale } from "@/lib/color";
 import { SiteSettingsProvider } from "@/components/brand/site-settings-provider";
 
 const inter = Inter({
@@ -43,7 +43,13 @@ export default async function RootLayout({
     .map(([stop, value]) => `--accent-${stop}:${value};`)
     .join("");
 
-  const themeOverrides = `:root{--background:${background};--surface:${shiftLightness(background, 5)};--muted:${shiftLightness(background, 11)};--border:${shiftLightness(background, 15)};--input:${shiftLightness(background, 17)};--accent:${accent};--accent-2:${shiftLightness(accent, -9)};--ring:${accent};--accent-foreground:${contrastingForeground(settings.buttonColor)};${accentScaleVars}}`;
+  // Texto e camadas (superfície/borda) se adaptam ao fundo escolhido —
+  // escuro clareia pra cima (tema original), claro escurece pra baixo
+  // (ex: fundo branco + texto preto), em vez de ficar sempre fixo no
+  // tema escuro original.
+  const foreground = contrastingForeground(settings.backgroundColor);
+  const mutedForeground = shiftLightness(foreground, isDarkTriple(background) ? -35 : 35);
+  const themeOverrides = `:root{--background:${background};--foreground:${foreground};--surface:${layerLightness(background, 5)};--muted:${layerLightness(background, 11)};--muted-foreground:${mutedForeground};--border:${layerLightness(background, 15)};--input:${layerLightness(background, 17)};--accent:${accent};--accent-2:${shiftLightness(accent, -9)};--ring:${accent};--accent-foreground:${contrastingForeground(settings.buttonColor)};${accentScaleVars}}`;
 
   // Vidro (barra lateral/cabeçalho): tom claro ou escuro + transparência,
   // ambos configuráveis em /admin/configuracoes. `.glass-root` (o painel

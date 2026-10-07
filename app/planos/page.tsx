@@ -76,10 +76,8 @@ export default async function PlanosPage() {
               <div
                 key={plan.id}
                 className={cn(
-                  "flex flex-col rounded-2xl border p-7 shadow-card",
-                  plan.is_featured
-                    ? "border-accent bg-surface shadow-elevated ring-1 ring-accent"
-                    : "border-border bg-surface"
+                  "glass-card flex flex-col rounded-2xl p-7 shadow-card",
+                  plan.is_featured && "border-accent shadow-elevated ring-1 ring-accent"
                 )}
               >
                 {plan.is_featured && (

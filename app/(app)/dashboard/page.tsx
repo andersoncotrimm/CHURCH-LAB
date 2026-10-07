@@ -140,7 +140,7 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      <div className="overflow-hidden rounded-2xl border border-border bg-surface shadow-card">
+      <div className="glass-card overflow-hidden rounded-2xl shadow-card">
         <div className="flex items-center gap-2 border-b border-border px-5 pt-5 sm:px-6 sm:pt-6">
           <h2 className="text-sm font-semibold text-foreground">Continuar de onde parou</h2>
         </div>
