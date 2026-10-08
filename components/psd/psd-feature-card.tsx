@@ -20,7 +20,7 @@ export function PsdFeatureCard({ psd, actions }: { psd: PsdFile; actions: React.
       <div className="flex flex-1 flex-col justify-between gap-4">
         <div>
           {category && (
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-cyan-600">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-accent">
               {category.name}
             </span>
           )}

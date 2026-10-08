@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { createClient } from "@/utils/supabase/server";
 import { getSiteSettings } from "@/lib/settings";
 import { hexToHslTriple, layerLightness, contrastingForeground, shiftLightness, isDarkTriple, buildAccentScale } from "@/lib/color";
 import { SiteSettingsProvider } from "@/components/brand/site-settings-provider";
 
-const inter = Inter({
+const grotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-grotesk",
   display: "swap",
 });
 
@@ -81,7 +82,7 @@ export default async function RootLayout({
     : "";
 
   return (
-    <html lang="pt-BR" className={inter.variable}>
+    <html lang="pt-BR" className={grotesk.variable}>
       <head>
         <style
           id="site-theme"

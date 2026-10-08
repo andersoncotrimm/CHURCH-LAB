@@ -29,8 +29,8 @@ export interface SiteSettings {
 
 const DEFAULT_SETTINGS: SiteSettings = {
   siteName: "CHURCH-LAB",
-  backgroundColor: "#0a0a0c",
-  buttonColor: "#e60a15",
+  backgroundColor: "#000000",
+  buttonColor: "#d8ff00",
   carouselIntervalSeconds: 7,
   referencePinterestUrl: null,
   backgroundImageMobileUrl: null,

@@ -17,7 +17,7 @@ const config: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-inter)", "system-ui", "sans-serif"],
+        sans: ["var(--font-grotesk)", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -52,18 +52,17 @@ const config: Config = {
         cyan: {
           DEFAULT: "hsl(var(--cyan))",
           foreground: "hsl(var(--cyan-foreground))",
-          // Dourado — acento secundário (tags de categoria), ecoa a cor
-          // da estrelinha de avaliação da referência.
-          50: "#2b2107",
-          100: "#3d2f09",
-          200: "#5c470d",
-          300: "#8a6912",
-          400: "#c2971a",
-          500: "#e6b323",
-          600: "#f7c73f",
-          700: "#fad978",
-          800: "#fce9ad",
-          900: "#fef8e0",
+          // Cinza — acento secundário (tags de categoria).
+          50: "#1a1a1b",
+          100: "#2a2a2c",
+          200: "#404043",
+          300: "#58585c",
+          400: "#717175",
+          500: "#86868a",
+          600: "#97999b",
+          700: "#b4b5b7",
+          800: "#d2d3d4",
+          900: "#eeeeef",
         },
         success: {
           DEFAULT: "hsl(var(--success))",

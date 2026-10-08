@@ -96,7 +96,7 @@ function PsdCard({ psd, isFavorited = false, isLoggedIn, availableCredits = null
 
         <div className="flex flex-1 flex-col gap-1.5 p-4">
           {category && (
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-cyan-600">
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-accent">
               {category.name}
             </span>
           )}
