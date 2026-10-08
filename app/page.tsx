@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PublicShell } from "@/components/public/public-shell";
+import { LandingHero } from "@/components/public/landing-hero";
 import { HeroCarousel } from "@/components/psd/hero-carousel";
 import { CoverflowCarousel } from "@/components/psd/coverflow-carousel";
 import { PsdRow } from "@/components/psd/psd-row";
@@ -98,9 +99,15 @@ export default async function LandingPage() {
     .sort((a, b) => (favoritesCounts.get(b.id) ?? 0) - (favoritesCounts.get(a.id) ?? 0))
     .slice(0, 12);
 
+  const showcasePsds = [...heroItems, ...mostDownloaded, ...newest]
+    .filter((psd, index, all) => psd.thumbnail_url && all.findIndex((p) => p.id === psd.id) === index)
+    .slice(0, 9);
+
   return (
     <PublicShell categories={categories} enabledContentTypes={enabledContentTypes}>
       <div className="mx-auto flex max-w-6xl flex-col gap-10">
+        <LandingHero showcasePsds={showcasePsds} />
+
         {heroItems.length > 0 ? (
           <HeroCarousel items={heroItems} variant="guest" intervalSeconds={carouselIntervalSeconds} />
         ) : (
