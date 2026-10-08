@@ -76,6 +76,15 @@ const config: Config = {
           DEFAULT: "hsl(var(--danger))",
           foreground: "hsl(var(--danger-foreground))",
         },
+        // Cores fixas dos widgets do dashboard (bento grid) — não seguem a
+        // cor de destaque do admin de propósito: o visual de referência
+        // usa várias cores vívidas lado a lado, não uma única cor de marca.
+        widget: {
+          purple: "#7c5cff",
+          blue: "#3b82f6",
+          orange: "#ff6a3d",
+          pink: "#ff4d94",
+        },
       },
       borderRadius: {
         xl: "1rem",
